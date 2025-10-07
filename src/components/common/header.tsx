@@ -30,7 +30,7 @@ const Header = () => {
       }}
     >
       {/* Left section */}
-      {canShowBack && path.name !== 'Home' && (
+      {canShowBack && path.name !== 'Home' && path.name !== 'Search' && (
         <TouchableOpacity
           onPress={() => {
             if (canShowBack) {
@@ -57,7 +57,9 @@ const Header = () => {
         </TouchableOpacity>
       )}
 
-      {path.name === 'Home' && (
+      {(path.name === 'Home' ||
+        path.name === 'Search' ||
+        path.name === 'Stream') && (
         <TouchableOpacity
           onPress={() => {
             navigation.navigate('PublicProfile');
@@ -91,7 +93,7 @@ const Header = () => {
               fontSize: scaleFont(16),
             }}
           >
-            Stream
+            {path.name}
           </Text>
         </View>
       )}
@@ -105,6 +107,7 @@ const Header = () => {
           }}
         >
           <TouchableOpacity
+            onPress={() => navigation.navigate('Notifications')}
             style={{
               height: scale(48),
               width: scale(48),

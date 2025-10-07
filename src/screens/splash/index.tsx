@@ -12,7 +12,10 @@ const SplashScreen = ({ navigation }) => {
     animationRef?.current?.play();
 
     setTimeout(() => {
-      setLoading(false), navigation.replace('Home');
+      setLoading(false),
+        navigation.replace('MainTabs', {
+          screen: 'Home', // the tab name
+        });
     }, 2000);
   }, []);
   return (

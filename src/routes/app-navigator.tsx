@@ -5,6 +5,7 @@ import { View, Text, AppStateStatus, AppState } from 'react-native';
 import PublicRoutes from './public-route';
 import PrivateRoutes from './private-route';
 import { useAppDispatch, useAppSelector } from '../hooks/use-redux';
+import BottomTabs from '../components/layout/bottom-nav';
 
 export default function AppNavigator() {
   const dispatch = useAppDispatch();
@@ -21,6 +22,8 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <PublicRoutes />
+      {/* <BottomTabs /> */}
+      {/* <MyTabs /> */}
     </NavigationContainer>
   );
 }

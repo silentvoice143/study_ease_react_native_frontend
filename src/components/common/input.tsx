@@ -12,6 +12,7 @@ import {
   scaleFont,
   verticalScale,
 } from '../../utils/sizer';
+import { COLORS } from '../../theme/colors';
 
 type SearchBoxProps = TextInputProps & {
   placeholder?: string;
@@ -64,9 +65,10 @@ export default function SearchBox({
 const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: moderateScale(8),
-    paddingHorizontal: scale(10),
+    borderColor: COLORS.voilet.light,
+    borderRadius: scale(24),
+    height: verticalScale(48),
+    paddingHorizontal: scale(14),
     backgroundColor: '#fff',
   },
 });

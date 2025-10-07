@@ -35,7 +35,7 @@ const PageWithHeader = ({ children }: { children: React.ReactNode }) => {
       </LinearGradient>
 
       <View style={{ flex: 1, paddingTop: verticalScale(12) }}>{children}</View>
-      {!keyboardVisible && !hideNavforPath.includes(path.name) && (
+      {/* {!keyboardVisible && !hideNavforPath.includes(path.name) && (
         <View
           style={{
             height: verticalScale(64),
@@ -47,7 +47,7 @@ const PageWithHeader = ({ children }: { children: React.ReactNode }) => {
             alignSelf: 'center',
           }}
         />
-      )}
+      )} */}
     </View>
   );
 };

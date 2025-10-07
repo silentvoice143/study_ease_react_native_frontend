@@ -21,9 +21,8 @@ import {
   queryClient,
 } from './src/services/query-client';
 import StoreProvider from './src/store/store-provider';
-import { Fonts } from './src/theme/fonts';
-import Home from './src/screens/home';
 import AppNavigator from './src/routes/app-navigator';
+import ToastManager from 'toastify-react-native';
 
 function App() {
   return (
@@ -34,6 +33,7 @@ function App() {
           persistOptions={{ persister: asyncStoragePersister }}
         >
           <AppNavigator />
+          <ToastManager />
         </PersistQueryClientProvider>
       </StoreProvider>
     </SafeAreaProvider>

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { store } from '../store'; // <-- Import your Redux store
 
 const api = axios.create({
-  baseURL: 'https://your-api-base-url.com/api',
+  baseURL: 'https://a8354ea6a6ae.ngrok-free.app',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -12,6 +12,8 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async config => {
+    const fullUrl = `${config.baseURL || ''}${config.url}`;
+    console.log('Request URL:', fullUrl);
     const state = store.getState();
     const token = state.auth?.token;
 

@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
-  SafeAreaView,
   Dimensions,
 } from 'react-native';
 import ArrowLeft from '../../assets/icons/arrow-left-icon';
@@ -135,11 +134,13 @@ const PublicProfile = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar backgroundColor="#E9D5FF" barStyle="dark-content" />
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate('Home');
+          navigation.replace('MainTabs', {
+            screen: 'Home', // the tab name
+          });
         }}
         style={{
           position: 'absolute',
@@ -210,7 +211,7 @@ const PublicProfile = () => {
           </View>
         </View> */}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 

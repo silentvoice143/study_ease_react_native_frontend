@@ -1,31 +1,3 @@
-// import { View, Text, StyleSheet } from 'react-native';
-// import React from 'react';
-// import { COLORS } from '../../theme/colors';
-// import PageWithHeader from '../../components/layout/page-with-header';
-// import Header from '../../components/common/header';
-// import { GlowCircle } from '../../components/common/glow-circle';
-
-// const Home = () => {
-//   return (
-//     // <PageWithHeader>
-//     <View style={style.container}>
-//       <Header />
-//       <GlowCircle size={150} colors={['#ffffff', '#e0d4ff']} />
-//       <Text>Home</Text>
-//     </View>
-//     // </PageWithHeader>
-//   );
-// };
-
-// export default Home;
-
-// const style = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: COLORS.surface.white,
-//   },
-// });
-
 import React from 'react';
 import {
   View,
@@ -37,35 +9,53 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import NotificationItem from './_components/notification-item';
-import Header from '../../components/common/header';
 import PageWithHeader from '../../components/layout/page-with-header';
 import { scale, verticalScale } from '../../utils/sizer';
+import { useQuery } from '@tanstack/react-query';
+import { fetchStreams } from '../../apis/stream';
+import { Stream } from '../../utils/types';
 
-const Home = ({ navigation }) => {
-  const streams = [
-    { code: 'BCA', subtitle: 'PYQ+Notes' },
-    { code: 'BBA', subtitle: 'PYQ+Notes' },
-    { code: 'MBA', subtitle: 'PYQ+Notes' },
-    { code: 'MCA', subtitle: 'PYQ+Notes' },
-    { code: 'B.Tech', subtitle: 'PYQ+Notes' },
-  ];
+const Home = ({ navigation }: any) => {
+  const {
+    data,
+    isLoading: isStreamLoading,
+    isError,
+    error,
+  } = useQuery<Stream[]>({
+    queryKey: ['streams'],
+    queryFn: () => fetchStreams(),
+    staleTime: 1000 * 60 * 5,
+  });
 
   const notifications = [
     'Sem III exam will be on 22-09-2025',
     'Sem III exam will be on 22-09-2025 all students should retrieve their admin roll before.',
     'Sem III exam will be on 22-09-2025',
   ];
+  console.log('Streams Data:', isStreamLoading, isError, error, data);
 
-  const StreamCard = ({ stream }) => (
+  const StreamCard = ({ stream }: any) => (
     <TouchableOpacity
       style={styles.streamCard}
       onPress={() => {
-        navigation.navigate('Noteview');
+        navigation.navigate('StreamsTab', {
+          screen: 'Semester',
+          params: { streamId: stream?.id ?? '' },
+        });
       }}
     >
-      <Text style={styles.streamCode}>{stream.code}</Text>
-      <Text style={styles.streamSubtitle}>{stream.subtitle}</Text>
+      <Text style={styles.streamCode}>{stream?.name ?? ''}</Text>
+      <Text style={styles.streamSubtitle}>
+        Total Sem - {stream?.totalSemesters}
+      </Text>
     </TouchableOpacity>
+  );
+
+  const LoadingStreamCard = () => (
+    <View style={styles.streamCard}>
+      <View style={styles.skeletonTitle} />
+      <View style={styles.skeletonSubtitle} />
+    </View>
   );
 
   return (
@@ -90,9 +80,19 @@ const Home = ({ navigation }) => {
                 style={styles.streamsContainer}
                 contentContainerStyle={styles.streamsContent}
               >
-                {streams.map((stream, index) => (
-                  <StreamCard key={index} stream={stream} />
-                ))}
+                {isStreamLoading ? (
+                  // Show 3 loading skeleton cards
+                  <>
+                    <LoadingStreamCard />
+                    <LoadingStreamCard />
+                    <LoadingStreamCard />
+                  </>
+                ) : (
+                  // Show actual stream data
+                  data?.streams.map((stream, index) => (
+                    <StreamCard key={index} stream={stream} />
+                  ))
+                )}
               </ScrollView>
             </LinearGradient>
           </View>
@@ -106,12 +106,12 @@ const Home = ({ navigation }) => {
           </View>
 
           {/* Advertisements Section */}
-          {/* <View style={styles.advertisementsSection}>
+          <View style={styles.advertisementsSection}>
             <Text style={styles.sectionTitle}>Advertisements</Text>
             <View style={styles.adPlaceholder}>
               <Text style={styles.adText}>ADS</Text>
             </View>
-          </View> */}
+          </View>
         </ScrollView>
       </View>
     </PageWithHeader>
@@ -196,6 +196,20 @@ const styles = StyleSheet.create({
   streamSubtitle: {
     color: '#666',
     fontSize: 12,
+  },
+  // Skeleton loading styles
+  skeletonTitle: {
+    width: 60,
+    height: 16,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4,
+    marginBottom: 8,
+  },
+  skeletonSubtitle: {
+    width: 70,
+    height: 12,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 4,
   },
   notificationsSection: {
     padding: 20,

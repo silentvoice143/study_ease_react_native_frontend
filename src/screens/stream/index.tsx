@@ -7,13 +7,33 @@ import {
   scaleFont,
   verticalScale,
 } from '../../utils/sizer';
-import LinearGradient from 'react-native-linear-gradient';
 import SearchBox from '../../components/common/input';
 import { COLORS } from '../../theme/colors';
-import { Fonts } from '../../theme/fonts';
 import Card from '../../components/common/card';
+import { fetchStreams } from '../../apis/stream';
+import { useQuery } from '@tanstack/react-query';
 
-const StreamScreen = () => {
+const StreamScreen = ({ navigation, route }: any) => {
+  const { stream } = route.params ?? '';
+  const {
+    data,
+    isLoading: streamLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ['streams'],
+    queryFn: () => fetchStreams(''),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  console.log(
+    'Streams Data in StreamScreen:',
+    streamLoading,
+    isError,
+    error,
+    data,
+  );
+
   return (
     <PageWithHeader>
       <View style={styles.container}>
@@ -45,31 +65,19 @@ const StreamScreen = () => {
               gap: verticalScale(16),
             }}
           >
-            {/* <View
-              style={{
-                backgroundColor: COLORS.surface.white,
-                borderRadius: moderateScale(12),
-                padding: scale(24),
-                borderWidth: 1,
-                borderColor: COLORS.voilet.lighter,
-              }}
-            >
-              <Text
-                style={[
-                  { fontFamily: Fonts.inter.semiBold, fontSize: scaleFont(16) },
-                ]}
-              >
-                BCA
-              </Text>
-            </View> */}
-            <Card text="BCA" subtext="PYQ + Notes" />
-            <Card text="BCA" />
-            <Card text="BCA" />
-            <Card text="BCA" />
-            <Card text="BCA" />
-            <Card text="BCA" />
-            <Card text="BCA" />
-            <Card text="BCA" />
+            {data?.streams?.map((item, idx) => (
+              <Card
+                key={item.id}
+                text={item.name}
+                subtext="PYQ + Notes"
+                onPress={() => {
+                  navigation.navigate('StreamsTab', {
+                    screen: 'Semester',
+                    params: { streamId: item.id ?? '' },
+                  });
+                }}
+              />
+            ))}
           </View>
         </ScrollView>
       </View>

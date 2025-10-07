@@ -4,11 +4,12 @@ import PageWithHeader from '../../components/layout/page-with-header';
 import { Text, View } from 'react-native';
 import PDFViewer from '../../components/common/pdf-viewer';
 
-function NoteViewScreen() {
+function NoteViewScreen({ navigation, route }: any) {
+  const { url } = route.params ?? '';
   const [driveUrl, setDriveUrl] = useState(
     'https://drive.google.com/file/d/12ZETi4ovmVR6QptVDQkmP7GCPo4nkhED/view?usp=sharing',
   );
-  const [pdfSource, setPdfSource] = useState(null);
+  const [pdfSource, setPdfSource] = useState<any>(null);
   const convertGoogleDriveLink = (shareLink: string) => {
     // Extract file ID from Google Drive sharing link
     const match = shareLink.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -49,7 +50,7 @@ function NoteViewScreen() {
       }
     })();
   }, [driveUrl]);
-  console.log(pdfSource, '---pdfSource');
+
   return (
     <PageWithHeader>
       <View style={{ flex: 1 }}>

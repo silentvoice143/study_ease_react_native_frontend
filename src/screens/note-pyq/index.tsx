@@ -6,7 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PageWithHeader from '../../components/layout/page-with-header';
 import {
   scale,
@@ -20,10 +20,42 @@ import { Toast } from 'toastify-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { notes, pyq } from '../../apis/query-keys';
 import { fetchSubjectNotes, fetchSubjectPYQ } from '../../apis/subject';
+import { useAppDispatch } from '../../hooks/use-redux';
+import { useFileDownloader } from '../../hooks/use-download';
+import RNFS from 'react-native-fs';
+import { removeOfflineFile } from '../../store/slices/offline-slice';
+import Banner from '../../components/ads/benner';
+import {
+  createRewardedAd,
+  loadAndShowInterstitialAdWithRetry,
+} from '../../components/ads/rewarded';
+import { InterstitialAd } from 'react-native-google-mobile-ads';
+import { useFocusEffect } from '@react-navigation/native';
 
 const NotesPYQScreen = ({ navigation, route }: any) => {
   const { subjectId, initialTab } = route.params ?? {};
   const [activeTab, setActiveTab] = useState(initialTab || 'notes');
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [fileExistence, setFileExistence] = useState<Record<string, boolean>>(
+    {},
+  );
+
+  //---------ads control------------
+  const [downloadAd, setDownloadAd] = useState<InterstitialAd>(() =>
+    createRewardedAd(),
+  );
+  const [downloadAdLoaded, setDownloadAdLoaded] = useState(false);
+  const [isDownloadAdLoading, setIsDownloadAdLoading] = useState(false);
+
+  const dispatch = useAppDispatch();
+  const { downloadFile, progress, status } = useFileDownloader();
+
+  useFocusEffect(
+    useCallback(() => {
+      const ad = createRewardedAd(); // Always create fresh instance
+      setDownloadAd(ad);
+    }, [dispatch, navigation]),
+  );
 
   const {
     data: notesData,
@@ -52,41 +84,161 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
   const isLoading = activeTab === 'notes' ? isNotesLoading : isPYQLoading;
   const isError = activeTab === 'notes' ? isNotesError : isPYQError;
   const error = activeTab === 'notes' ? notesError : pyqError;
-  const data = activeTab === 'notes' ? notesData : pyqData.data;
+  const data = activeTab === 'notes' ? notesData : pyqData?.data;
 
-  const handleDownload = (item: any) => {
-    console.log('Downloading:', item.title);
-    Toast.success('Download started!');
+  // Check file existence for all items
+  useEffect(() => {
+    const checkAllFiles = async () => {
+      if (!data || data.length === 0) return;
+
+      const existenceMap: Record<string, boolean> = {};
+
+      await Promise.all(
+        data.map(async (item: any) => {
+          const fileName = `${item.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+          const localPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+          const exists = await RNFS.exists(localPath);
+          existenceMap[item.id] = exists;
+        }),
+      );
+
+      setFileExistence(existenceMap);
+    };
+
+    checkAllFiles();
+  }, [data, activeTab]);
+
+  const showAdsAndDownload = async (item: any) => {
+    await loadAndShowInterstitialAdWithRetry({
+      adName: 'Download',
+      adInstance: downloadAd,
+      setAdInstance: setDownloadAd,
+      isAdLoaded: downloadAdLoaded,
+      setAdLoaded: setDownloadAdLoaded,
+      setLoader: setIsDownloadAdLoading,
+      maxRetries: 5,
+      onSkip: () => {
+        handleDownloadFile(item);
+        setDownloadAdLoaded(false);
+      },
+      onAdShown: () => {
+        handleDownloadFile(item);
+        setDownloadAdLoaded(false);
+      },
+      onAdDismissed() {},
+    });
   };
 
-  console.log(notesData, pyqData, '-------data');
+  const handleDownloadFile = async (item: any) => {
+    setDownloadingId(item.id);
+    await downloadFile(item, activeTab);
 
-  const renderItem = ({ item }: any) => (
-    <TouchableOpacity
-      style={styles.itemCard}
-      onPress={() => {
-        console.log('navigating to note screen');
-        navigation.navigate('StreamsTab', {
-          screen: 'Noteview',
-          params: { url: item.url || 'abc' },
-        });
-      }}
-    >
-      <View style={styles.itemContent}>
-        <Text style={styles.itemTitle}>{item.title}</Text>
-        <View style={styles.itemMeta}>
-          {/* <Text style={styles.metaDot}>•</Text> */}
-          <Text style={styles.metaText}>{item.year}</Text>
-        </View>
+    // Update file existence after download
+    const fileName = `${item.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    const localPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+    const exists = await RNFS.exists(localPath);
+    setFileExistence(prev => ({ ...prev, [item.id]: exists }));
+    setDownloadingId(null);
+  };
+
+  const handleDeleteFile = async (item: any) => {
+    try {
+      const fileName = `${item.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      const localPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+      await RNFS.unlink(localPath);
+      Toast.success(`Deleted "${item.title}" successfully!`);
+
+      // Update Redux store
+      dispatch(removeOfflineFile(item.id));
+
+      // Update file existence
+      setFileExistence(prev => ({ ...prev, [item.id]: false }));
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      Toast.error('Failed to delete file');
+    }
+  };
+
+  const BannerAd = ({ onClose }) => {
+    return (
+      <View style={styles.bannerAdContainer}>
+        <Banner
+          adUnitId={'ca-app-pub-5415975767472598/1623919576'}
+          size="BANNER"
+          maxRetries={20}
+          retryDelay={20000}
+          exponentialBackoff={true}
+          showDebugInfo={true}
+          onAdLoaded={() => console.log('Ad ready!')}
+          onRetryAttempt={attempt => console.log(`Attempt ${attempt}`)}
+        />
+        {onClose && (
+          <TouchableOpacity style={styles.closeAdButton} onPress={onClose}>
+            <Text style={styles.closeAdText}>×</Text>
+          </TouchableOpacity>
+        )}
       </View>
-      <TouchableOpacity
-        onPress={() => handleDownload(item)}
-        style={styles.downloadButton}
-      >
-        <DownloadIcon />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
+
+  const renderItem = ({ item, index }: any) => {
+    const isDownloading = downloadingId === item.id && status === 'downloading';
+    const fileExists = fileExistence[item.id];
+
+    return (
+      <React.Fragment>
+        <TouchableOpacity
+          style={styles.itemCard}
+          onPress={() => {
+            console.log('navigating to note screen', item.fileUrl);
+            navigation.navigate('StreamsTab', {
+              screen: 'Noteview',
+              params: { url: item.fileUrl || 'abc', headerTitle: item.title },
+            });
+          }}
+        >
+          <View style={styles.itemContent}>
+            <Text style={styles.itemTitle}>{item.title}</Text>
+            <View style={styles.itemMeta}>
+              <Text style={styles.metaText}>{item.year}</Text>
+              {fileExists && (
+                <View style={styles.downloadedBadge}>
+                  <Text style={styles.downloadedText}>Downloaded</Text>
+                </View>
+              )}
+            </View>
+          </View>
+
+          {isDownloading ? (
+            <View style={styles.progressContainer}>
+              <ActivityIndicator size="small" color={COLORS.voilet.dark} />
+              <Text style={styles.progressText}>{progress}%</Text>
+            </View>
+          ) : fileExists ? (
+            <TouchableOpacity
+              onPress={() => handleDeleteFile(item)}
+              style={[styles.downloadButton, styles.deleteButton]}
+            >
+              <Text style={styles.deleteIcon}>🗑️</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={() => showAdsAndDownload(item)}
+              style={styles.downloadButton}
+            >
+              <DownloadIcon />
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
+        {(index + 1) % 3 === 0 && index !== notesData.length - 1 && (
+          <View style={styles.inFeedAdWrapper}>
+            <BannerAd onClose={null} />
+          </View>
+        )}
+      </React.Fragment>
+    );
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -239,15 +391,22 @@ const styles = StyleSheet.create({
   itemMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: scale(6),
+    gap: scale(8),
   },
   metaText: {
     fontSize: scaleFont(12),
     color: COLORS.gray.light,
   },
-  metaDot: {
-    fontSize: scaleFont(12),
-    color: '#999',
+  downloadedBadge: {
+    backgroundColor: COLORS.voilet.lighter,
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(4),
+  },
+  downloadedText: {
+    fontSize: scaleFont(10),
+    color: COLORS.voilet.dark,
+    fontWeight: '600',
   },
   downloadButton: {
     width: scale(40),
@@ -257,9 +416,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  downloadIcon: {
+  deleteButton: {
+    backgroundColor: '#FFE5E5',
+  },
+  deleteIcon: {
     fontSize: scaleFont(18),
+  },
+  progressContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: scale(60),
+  },
+  progressText: {
+    fontSize: scaleFont(11),
     color: COLORS.voilet.dark,
+    fontWeight: '600',
+    marginTop: verticalScale(4),
   },
   centerContainer: {
     flex: 1,
@@ -289,6 +461,34 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(13),
     color: '#999',
     textAlign: 'center',
+  },
+  // Banner Ad Styles
+  bannerAdContainer: {},
+
+  closeAdButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeAdText: {
+    fontSize: 20,
+    color: '#64748b',
+    fontWeight: '300',
+    lineHeight: 20,
+  },
+  inFeedAdWrapper: {
+    marginVertical: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  bottomSpacing: {
+    height: 20,
   },
 });
 

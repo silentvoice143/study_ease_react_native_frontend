@@ -6,7 +6,15 @@ import LinearGradient from 'react-native-linear-gradient';
 import { COLORS } from '../../theme/colors';
 import { useRoute } from '@react-navigation/native';
 
-const PageWithHeader = ({ children }: { children: React.ReactNode }) => {
+const PageWithHeader = ({
+  children,
+  headerTitle,
+  from,
+}: {
+  children: React.ReactNode;
+  headerTitle?: string;
+  from?: string;
+}) => {
   const [keyboardVisible, setKeyboardVisible] = React.useState(false);
   const path = useRoute();
   const hideNavforPath = ['Noteview'];
@@ -31,7 +39,7 @@ const PageWithHeader = ({ children }: { children: React.ReactNode }) => {
         barStyle="dark-content"
       />
       <LinearGradient colors={[COLORS.voilet.light, COLORS.surface.background]}>
-        <Header />
+        <Header headerTitle={headerTitle} navigateBack={from ?? ''} />
       </LinearGradient>
 
       <View style={{ flex: 1, paddingTop: verticalScale(12) }}>{children}</View>

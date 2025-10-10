@@ -1,12 +1,10 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SplashScreen from '../screens/splash';
-import Home from '../screens/home';
-import StreamScreen from '../screens/stream';
-import NoteViewScreen from '../screens/noteview';
 import PublicProfile from '../screens/profile';
 import BottomTabs from '../components/layout/bottom-nav';
 import NotificationScreen from '../screens/notification';
+import NotificationViewScreen from '../screens/notificationview';
 
 const Stack = createNativeStackNavigator();
 
@@ -20,8 +18,18 @@ export default function PublicRoutes() {
     >
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Notifications" component={NotificationScreen} />
+      <Stack.Screen
+        name="NotificationView"
+        component={NotificationViewScreen}
+      />
       {/* Screens WITH tabs */}
-      <Stack.Screen name="MainTabs" component={BottomTabs} />
+      <Stack.Screen
+        options={{
+          animation: 'slide_from_left', // built-in animations
+        }}
+        name="MainTabs"
+        component={BottomTabs}
+      />
       <Stack.Screen
         name="PublicProfile"
         component={PublicProfile}

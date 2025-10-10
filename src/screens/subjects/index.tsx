@@ -20,23 +20,34 @@ import { fetchSubject } from '../../apis/subject';
 import { subjects } from '../../apis/query-keys';
 import SubjectCard from './_components/subject-card';
 import { Toast } from 'toastify-react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { NavigatorScreenParams } from '@react-navigation/native';
 
 type Subject = {
   id: number;
   name: string;
 };
 
-interface SubjectScreenProps {
-  navigation: any;
-  route: {
-    params?: {
-      streamId: string | number;
-      semester: number;
-    };
+export type StreamsTabParamList = {
+  'Notes & PYQ': {
+    subjectId: number;
+    initialTab: string;
   };
-}
+  Noteview: {
+    url: string;
+    headerTitle: string;
+  };
+};
 
-const SubjectScreen: React.FC<SubjectScreenProps> = ({ navigation, route }) => {
+export type RootStackParamList = {
+  Home: undefined;
+  Subject: { streamId: string | number; semester: string | number };
+  StreamsTab: NavigatorScreenParams<StreamsTabParamList>;
+};
+
+type Props = NativeStackScreenProps<RootStackParamList, 'Subject'>;
+
+const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
   const { streamId, semester } = route.params ?? { streamId: '', semester: 0 };
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -46,7 +57,7 @@ const SubjectScreen: React.FC<SubjectScreenProps> = ({ navigation, route }) => {
     queryKey: subjects(streamId, semester),
     queryFn: () => fetchSubject(streamId, semester),
     staleTime: 1000 * 60 * 5,
-    enabled: !!streamId && semester > 0,
+    enabled: !!streamId && +semester > 0,
     onError: (err: Error) => Toast.error(err.message),
   } as UseQueryOptions<Subject[], Error>;
 
@@ -124,7 +135,10 @@ const SubjectScreen: React.FC<SubjectScreenProps> = ({ navigation, route }) => {
             onPress={() => {
               navigation.navigate('StreamsTab', {
                 screen: 'Notes & PYQ',
-                params: { subjectId: item.id },
+                params: {
+                  subjectId: +item.id,
+                  initialTab: 'notes',
+                },
               });
             }}
           />

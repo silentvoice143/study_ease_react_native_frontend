@@ -1,4 +1,7 @@
 {
   "name": "study_ease",
-  "displayName": "study_ease"
+  "displayName": "StudyEase",
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-5415975767472598~1060812799"
+  }
 }

@@ -1,5 +1,11 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import React, { useMemo } from 'react';
 import PageWithHeader from '../../components/layout/page-with-header';
 import {
   moderateScale,
@@ -12,8 +18,11 @@ import { COLORS } from '../../theme/colors';
 import Card from '../../components/common/card';
 import { fetchStreams } from '../../apis/stream';
 import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '../../hooks/use-debounce';
 
 const StreamScreen = ({ navigation, route }: any) => {
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
   const { stream } = route.params ?? '';
   const {
     data,
@@ -34,6 +43,14 @@ const StreamScreen = ({ navigation, route }: any) => {
     data,
   );
 
+  const streamData = useMemo(() => {
+    if (!data?.streams) return [];
+    if (!debouncedSearch) return data.streams;
+    return data.streams.filter((stream: any) =>
+      stream.name.toLowerCase().includes(debouncedSearch.toLowerCase()),
+    );
+  }, [data?.streams, debouncedSearch]);
+
   return (
     <PageWithHeader>
       <View style={styles.container}>
@@ -50,36 +67,58 @@ const StreamScreen = ({ navigation, route }: any) => {
               borderColor: COLORS.voilet.lighter,
             }}
             height={verticalScale(48)}
+            onChangeText={text => setSearchQuery(text as string)}
           />
         </View>
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Streams Section */}
 
-          <View
-            style={{
-              paddingHorizontal: scale(20),
-              paddingBottom: verticalScale(100),
-              gap: verticalScale(16),
-            }}
-          >
-            {data?.streams?.map((item, idx) => (
-              <Card
-                key={item.id}
-                text={item.name}
-                subtext="PYQ + Notes"
-                onPress={() => {
-                  navigation.navigate('StreamsTab', {
-                    screen: 'Semester',
-                    params: { streamId: item.id ?? '' },
-                  });
-                }}
-              />
-            ))}
+        {streamLoading ? (
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color={COLORS.gray.light} />
+            <Text style={styles.loaderText}>Loading streams...</Text>
           </View>
-        </ScrollView>
+        ) : isError ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Failed to load streams</Text>
+            <Text style={styles.errorSubtext}>{error?.message}</Text>
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+          >
+            <View
+              style={{
+                paddingHorizontal: scale(20),
+                paddingBottom: verticalScale(100),
+                gap: verticalScale(16),
+              }}
+            >
+              {streamData?.length > 0 ? (
+                streamData.map((item, idx) => (
+                  <Card
+                    key={item.id}
+                    text={item.name}
+                    subtext="PYQ + Notes"
+                    onPress={() => {
+                      navigation.navigate('StreamsTab', {
+                        screen: 'Semester',
+                        params: { streamId: item.id ?? '' },
+                      });
+                    }}
+                  />
+                ))
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>
+                    {debouncedSearch
+                      ? 'No streams found matching your search'
+                      : 'No streams available'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </ScrollView>
+        )}
       </View>
     </PageWithHeader>
   );
@@ -89,12 +128,50 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.surface.background,
-    // backgroundColor: 'red',
   },
   scrollView: {
     flex: 1,
   },
-
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: verticalScale(16),
+  },
+  loaderText: {
+    fontSize: scaleFont(14),
+    color: COLORS.gray.light,
+    marginTop: verticalScale(8),
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: scale(40),
+  },
+  errorText: {
+    fontSize: scaleFont(16),
+    color: '#ff4444',
+    fontWeight: '600',
+    marginBottom: verticalScale(8),
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: scaleFont(12),
+    color: '#999',
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: verticalScale(40),
+  },
+  emptyText: {
+    fontSize: scaleFont(14),
+    color: '#999',
+    textAlign: 'center',
+  },
   headerTitle: {
     color: '#999',
     fontSize: 16,
@@ -175,7 +252,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
   },
-
   advertisementsSection: {
     paddingHorizontal: 20,
     paddingBottom: 20,

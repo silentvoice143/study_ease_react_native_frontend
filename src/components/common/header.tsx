@@ -8,7 +8,13 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import ArrowLeft from '../../assets/icons/arrow-left-icon';
 import { Fonts } from '../../theme/fonts';
 
-const Header = () => {
+const Header = ({
+  headerTitle,
+  navigateBack,
+}: {
+  headerTitle?: string;
+  navigateBack?: string;
+}) => {
   const navigation = useNavigation<any>();
   const routes = navigation.getState()?.routes ?? [];
   const index = navigation.getState()?.index ?? 0;
@@ -34,7 +40,11 @@ const Header = () => {
         <TouchableOpacity
           onPress={() => {
             if (canShowBack) {
-              navigation.goBack();
+              if (navigateBack) {
+                navigation.navigate(navigateBack);
+              } else {
+                navigation.goBack();
+              }
             } else {
               // open drawer or do something else
             }
@@ -48,11 +58,6 @@ const Header = () => {
             backgroundColor: COLORS.surface.white,
           }}
         >
-          {/* {canShowBack ? (
-            <ArrowLeft size={20} />
-          ) : (
-            <MenuIcon size={20} color="#000" />
-          )} */}
           <ArrowLeft size={20} />
         </TouchableOpacity>
       )}
@@ -93,7 +98,11 @@ const Header = () => {
               fontSize: scaleFont(16),
             }}
           >
-            {path.name}
+            {headerTitle
+              ? headerTitle.length > 10
+                ? `${headerTitle.slice(0, 20)}...`
+                : headerTitle
+              : path.name}
           </Text>
         </View>
       )}

@@ -14,3 +14,10 @@ export const notes = (subjectId: string | number) => ['notes', { subjectId }];
 export const pyq = (subjectId: string | number) => ['pyq', { subjectId }];
 
 export const streams = (streamId: string | number) => ['streams', { streamId }];
+
+export const notifications = (
+  page: number,
+  limit: number,
+  filters?: Record<string, any>, // optional filters
+  sort?: string, // optional sort order
+) => ['notifications', { page, limit, filters, sort }];

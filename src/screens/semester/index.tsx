@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import React from 'react';
 import PageWithHeader from '../../components/layout/page-with-header';
@@ -19,23 +20,21 @@ import Card from '../../components/common/card';
 import { fetchStreams } from '../../apis/stream';
 import { useQuery } from '@tanstack/react-query';
 import { streams } from '../../apis/query-keys';
+import Banner from '../../components/ads/benner';
 
 // Banner Ad Component - Replace with your actual ad component
 const BannerAd = ({ onClose }) => {
   return (
     <View style={styles.bannerAdContainer}>
-      <View style={styles.bannerAdContent}>
-        <View style={styles.adTextContainer}>
-          <Text style={styles.adLabel}>Ad</Text>
-          <Text style={styles.adTitle}>Premium Features Available</Text>
-          <Text style={styles.adDescription}>
-            Upgrade to remove ads and unlock exclusive features
-          </Text>
-        </View>
-        <TouchableOpacity style={styles.adButton}>
-          <Text style={styles.adButtonText}>Learn More</Text>
-        </TouchableOpacity>
-      </View>
+      <Banner
+        size="ADAPTIVE_BANNER"
+        maxRetries={20}
+        retryDelay={20000}
+        exponentialBackoff={true}
+        showDebugInfo={true}
+        onAdLoaded={() => console.log('Ad ready!')}
+        onRetryAttempt={attempt => console.log(`Attempt ${attempt}`)}
+      />
       {onClose && (
         <TouchableOpacity style={styles.closeAdButton} onPress={onClose}>
           <Text style={styles.closeAdText}>×</Text>
@@ -62,7 +61,13 @@ const SemesterScreen = ({ navigation, route }: any) => {
   return (
     <PageWithHeader>
       <View style={styles.container}>
-        {showTopBanner && <BannerAd onClose={() => {}} />}
+        {showTopBanner && (
+          <BannerAd
+            onClose={() => {
+              setShowTopBanner(false);
+            }}
+          />
+        )}
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
@@ -77,7 +82,12 @@ const SemesterScreen = ({ navigation, route }: any) => {
             {/* Top Banner Ad - Shows after header */}
 
             {/* Loading/Error States */}
-            {isLoading && <Text>Loading...</Text>}
+            {isLoading && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#3b82f6" />
+                <Text style={styles.loadingText}>Loading semesters...</Text>
+              </View>
+            )}
             {isError && <Text>Error: {String(error)}</Text>}
 
             {/* Semester Cards */}
@@ -129,7 +139,7 @@ const styles = StyleSheet.create({
   bannerAdContainer: {
     width: '100%',
     height: verticalScale(50),
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.surface.white,
     borderRadius: moderateScale(8),
     alignItems: 'center',
     justifyContent: 'center',
@@ -248,7 +258,7 @@ const styles = StyleSheet.create({
   },
   //Banner
   bannerAdContainer: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: COLORS.surface.white,
     borderBottomWidth: 1,
     borderBottomColor: '#e0f2fe',
     position: 'relative',
@@ -314,14 +324,23 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    backgroundColor: COLORS.surface.white,
   },
   bottomSpacing: {
     height: 20,
+  },
+  // Loading States
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+    backgroundColor: COLORS.surface.background,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6b7280',
   },
 });
 

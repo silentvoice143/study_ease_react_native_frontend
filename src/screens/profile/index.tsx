@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,209 +7,248 @@ import {
   ScrollView,
   StatusBar,
   Dimensions,
+  Animated,
 } from 'react-native';
 import ArrowLeft from '../../assets/icons/arrow-left-icon';
 import { COLORS } from '../../theme/colors';
 import { scale, verticalScale } from '../../utils/sizer';
 import { useNavigation } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
 const { width, height } = Dimensions.get('window');
 
 const PublicProfile = () => {
   const navigation = useNavigation<any>();
-  // Random name pools
-  const firstNames = [
-    'Alex',
-    'Jordan',
-    'Taylor',
-    'Morgan',
-    'Casey',
-    'Riley',
-    'Avery',
-    'Quinn',
-    'Cameron',
-    'Sage',
-    'River',
-    'Phoenix',
-    'Skylar',
-    'Rowan',
-    'Finley',
-    'Emerson',
-    'Luna',
-    'Nova',
-    'Aria',
-    'Zoe',
-    'Maya',
-    'Kai',
-    'Leo',
-    'Max',
-    'Sam',
-    'Drew',
-    'Blake',
-    'Jamie',
-    'Reese',
-    'Parker',
-    'Hayden',
-    'Peyton',
-    'Eden',
-    'Ash',
-  ];
+  const [scaleAnim] = useState(new Animated.Value(1));
 
-  const lastNames = [
-    'Chen',
-    'Rodriguez',
-    'Johnson',
-    'Williams',
-    'Brown',
-    'Davis',
-    'Miller',
-    'Wilson',
-    'Moore',
-    'Taylor',
-    'Anderson',
-    'Thomas',
-    'Jackson',
-    'White',
-    'Harris',
-    'Martin',
-    'Thompson',
-    'Garcia',
-    'Martinez',
-    'Robinson',
-    'Clark',
-    'Lewis',
-    'Lee',
-    'Walker',
-    'Stone',
-    'Brooks',
-    'Reed',
-    'Cooper',
-    'Bell',
-    'Murphy',
-    'Rivera',
-    'Cook',
-  ];
-
-  const generateRandomProfile = () => {
-    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
-    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-
-    return {
-      firstName,
-      lastName,
-      fullName: `${firstName} ${lastName}`,
-      initials: `${firstName[0]}${lastName[0]}`,
-      posts: Math.floor(Math.random() * 500) + 50,
-      followers: Math.floor(Math.random() * 5000) + 200,
-      following: Math.floor(Math.random() * 1000) + 100,
-    };
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
   };
 
-  const [profile, setProfile] = useState(() => generateRandomProfile());
-
-  // Generate random colors for avatar
-  const avatarColors = useMemo(() => {
-    const colors = [
-      '#8B5CF6',
-      '#F59E0B',
-      '#10B981',
-      '#3B82F6',
-      '#EF4444',
-      '#8B5A2B',
-      '#6366F1',
-      '#EC4899',
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }, [profile]);
-
-  const regenerateProfile = () => {
-    setProfile(generateRandomProfile());
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
   };
 
-  const MenuItem = ({ title, showDot = true }) => (
-    <View style={styles.menuItem}>
-      <Text style={styles.menuText}>{title}</Text>
-      {showDot && <View style={styles.purpleDot} />}
-    </View>
-  );
+  const FeatureCard = ({ icon, title, description, color, delay = 0 }) => {
+    const [fadeAnim] = useState(new Animated.Value(0));
+
+    React.useEffect(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        delay: delay,
+        useNativeDriver: true,
+      }).start();
+    }, []);
+
+    return (
+      <Animated.View
+        style={[
+          styles.featureCard,
+          {
+            opacity: fadeAnim,
+            transform: [
+              {
+                translateY: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [50, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={[color + '20', color + '05']}
+          style={styles.featureGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={[styles.iconContainer, { backgroundColor: color }]}>
+            <Text style={styles.iconText}>{icon}</Text>
+          </View>
+          <View style={styles.featureContent}>
+            <Text style={styles.featureTitle}>{title}</Text>
+            <Text style={styles.featureDescription}>{description}</Text>
+          </View>
+          <View style={styles.comingSoonBadge}>
+            <Text style={styles.comingSoonText}>Coming Soon</Text>
+          </View>
+        </LinearGradient>
+      </Animated.View>
+    );
+  };
+
+  const BenefitItem = ({ text, index }) => {
+    const [fadeAnim] = useState(new Animated.Value(0));
+
+    React.useEffect(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        delay: 800 + index * 100,
+        useNativeDriver: true,
+      }).start();
+    }, []);
+
+    return (
+      <Animated.View
+        style={[
+          styles.benefitItem,
+          {
+            opacity: fadeAnim,
+            transform: [
+              {
+                translateX: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-30, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <View style={styles.checkIcon}>
+          <Text style={styles.checkText}>✓</Text>
+        </View>
+        <Text style={styles.benefitText}>{text}</Text>
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#E9D5FF" barStyle="dark-content" />
+      <StatusBar backgroundColor="#7C3AED" barStyle="light-content" />
+
       <TouchableOpacity
         onPress={() => {
           navigation.replace('MainTabs', {
-            screen: 'Home', // the tab name
+            screen: 'Home',
           });
         }}
-        style={{
-          position: 'absolute',
-          top: verticalScale(16),
-          left: scale(20),
-          zIndex: 99,
-          height: scale(48),
-          width: scale(48),
-          borderRadius: scale(32),
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: COLORS.surface.white,
-        }}
+        style={styles.backButton}
       >
-        <ArrowLeft size={20} />
+        <ArrowLeft size={20} color="#FFFFFF" />
       </TouchableOpacity>
-      {/* Header with gradient background */}
 
-      <View style={styles.header}>
-        {/* Profile Avatar */}
-        <View style={styles.avatarContainer}>
-          <View style={[styles.avatar, { backgroundColor: avatarColors }]}>
-            <Text style={styles.initials}>{profile.initials}</Text>
-          </View>
-        </View>
-
-        {/* Profile Name */}
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{profile.fullName}</Text>
-          <TouchableOpacity onPress={regenerateProfile}>
-            <Text style={styles.generateButton}>Generate New Profile</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
-        {/* Navigation Menu */}
-        <View style={styles.menuContainer}>
-          <MenuItem title="Stream" />
-          <MenuItem title="About" />
-          <MenuItem title="Photos" />
-          <MenuItem title="Posts" />
-          <MenuItem title="Friends" />
-          <MenuItem title="Settings" />
+        {/* Hero Section */}
+        <LinearGradient
+          colors={['#7C3AED', '#8B5CF6', '#A78BFA']}
+          style={styles.heroSection}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Animated.View
+            style={[styles.heroContent, { transform: [{ scale: scaleAnim }] }]}
+          >
+            <View style={styles.rocketContainer}>
+              <Text style={styles.rocketEmoji}>🚀</Text>
+            </View>
+            <Text style={styles.heroTitle}>
+              Exciting Updates{'\n'}Coming Soon!
+            </Text>
+            <Text style={styles.heroSubtitle}>
+              We're building amazing features to enhance your learning
+              experience
+            </Text>
+          </Animated.View>
+        </LinearGradient>
+
+        {/* Features Section */}
+        <View style={styles.featuresSection}>
+          <Text style={styles.sectionTitle}>What's Coming Next</Text>
+          <Text style={styles.sectionSubtitle}>
+            Get ready for these incredible features
+          </Text>
+
+          <FeatureCard
+            icon="🔔"
+            title="Real-Time Notifications"
+            description="Instant updates on exam schedules, results, and important announcements. Never miss a thing!"
+            color="#3B82F6"
+            delay={0}
+          />
+
+          <FeatureCard
+            icon="💬"
+            title="Q&A Community"
+            description="Ask questions, share knowledge, and help fellow students. A collaborative learning platform just for you."
+            color="#10B981"
+            delay={150}
+          />
+
+          <FeatureCard
+            icon="👥"
+            title="Public Group Chat"
+            description="Connect with classmates in real-time. Discuss topics, share resources, and build your network."
+            color="#F59E0B"
+            delay={300}
+          />
+
+          <FeatureCard
+            icon="🔐"
+            title="Secure Authentication"
+            description="Your data is protected with industry-standard security. Study with peace of mind."
+            color="#EF4444"
+            delay={450}
+          />
         </View>
 
-        {/* Profile Stats */}
-        {/* <View style={styles.statsContainer}>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{profile.posts}</Text>
-              <Text style={styles.statLabel}>Posts</Text>
+        {/* Benefits Section */}
+        <View style={styles.benefitsSection}>
+          <Text style={styles.sectionTitle}>Why You'll Love It</Text>
+
+          <BenefitItem text="100% Free - No hidden costs ever" index={0} />
+          <BenefitItem text="Student-focused features" index={1} />
+          <BenefitItem text="Easy to use interface" index={2} />
+          <BenefitItem text="Community-driven learning" index={3} />
+          <BenefitItem text="24/7 access from anywhere" index={4} />
+          <BenefitItem text="Regular updates and improvements" index={5} />
+        </View>
+
+        {/* Call to Action */}
+        <View style={styles.ctaSection}>
+          <LinearGradient
+            colors={['#7C3AED', '#8B5CF6']}
+            style={styles.ctaCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <Text style={styles.ctaTitle}>Stay Tuned!</Text>
+            <Text style={styles.ctaDescription}>
+              We're working hard to bring these features to you. Keep using the
+              app and watch for updates.
+            </Text>
+            <View style={styles.ctaBadge}>
+              <Text style={styles.ctaBadgeText}>Next Release: V2.0</Text>
             </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>
-                {profile.followers.toLocaleString()}
-              </Text>
-              <Text style={styles.statLabel}>Followers</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>
-                {profile.following.toLocaleString()}
-              </Text>
-              <Text style={styles.statLabel}>Following</Text>
-            </View>
-          </View>
-        </View> */}
+          </LinearGradient>
+        </View>
+
+        {/* Footer Note */}
+        <View style={styles.footerNote}>
+          <Text style={styles.footerText}>
+            Have suggestions? We'd love to hear from you!
+          </Text>
+          <Text style={styles.footerSubtext}>
+            Your feedback helps us build better features
+          </Text>
+        </View>
+
+        <View style={styles.bottomSpace} />
       </ScrollView>
     </View>
   );
@@ -223,132 +262,221 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  header: {
-    backgroundColor: '#E9D5FF',
-    paddingTop: verticalScale(60),
-    paddingBottom: 32,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 0,
-    borderBottomRightRadius: 0,
+  scrollContent: {
+    paddingBottom: 40,
   },
-  avatarContainer: {
+  backButton: {
+    position: 'absolute',
+    top: verticalScale(16),
+    left: scale(20),
+    zIndex: 99,
+    height: scale(48),
+    width: scale(48),
+    borderRadius: scale(24),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  heroSection: {
+    paddingTop: verticalScale(80),
+    paddingBottom: verticalScale(60),
+    paddingHorizontal: scale(24),
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  heroContent: {
+    alignItems: 'center',
+  },
+  rocketContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  rocketEmoji: {
+    fontSize: 50,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 40,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    opacity: 0.9,
+    lineHeight: 24,
+    paddingHorizontal: 20,
+  },
+  featuresSection: {
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(40),
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 24,
+  },
+  featureCard: {
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: COLORS.voilet.lighter,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  featureGradient: {
+    padding: 20,
+    position: 'relative',
+    borderRadius: 16,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    marginBottom: 16,
+  },
+  iconText: {
+    fontSize: 28,
+  },
+  featureContent: {
+    marginBottom: 12,
+  },
+  featureTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  featureDescription: {
+    fontSize: 14,
+    color: '#4B5563',
+    lineHeight: 20,
+  },
+  comingSoonBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#7C3AED',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  comingSoonText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  benefitsSection: {
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(40),
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    backgroundColor: '#F9FAFB',
+    padding: 16,
+    borderRadius: 12,
+  },
+  checkIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  checkText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  benefitText: {
+    fontSize: 15,
+    color: '#374151',
+    fontWeight: '500',
+    flex: 1,
+  },
+  ctaSection: {
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(40),
+  },
+  ctaCard: {
+    padding: 28,
+    borderRadius: 20,
+    alignItems: 'center',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
     elevation: 8,
   },
-  initials: {
+  ctaTitle: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    marginBottom: 12,
   },
-  profileInfo: {
+  ctaDescription: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    opacity: 0.95,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  ctaBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  ctaBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  footerNote: {
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(40),
     alignItems: 'center',
   },
-  profileName: {
-    fontSize: 24,
-    fontWeight: '600',
+  footerText: {
+    fontSize: 16,
     color: '#374151',
-    marginBottom: 8,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  footerSubtext: {
+    fontSize: 13,
+    color: '#9CA3AF',
     textAlign: 'center',
   },
-  generateButton: {
-    fontSize: 14,
-    color: '#7C3AED',
-    fontWeight: '500',
-  },
-  menuContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  menuText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  purpleDot: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#C4B5FD',
-    borderRadius: 6,
-  },
-  statsContainer: {
-    backgroundColor: '#F9FAFB',
-    marginTop: 32,
-    paddingVertical: 24,
-    paddingHorizontal: 24,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#374151',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    gap: 12,
-  },
-  followButton: {
-    flex: 1,
-    backgroundColor: '#7C3AED',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  followButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  messageButton: {
-    flex: 1,
-    backgroundColor: '#E5E7EB',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  messageButtonText: {
-    color: '#374151',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   bottomSpace: {
-    height: 80,
+    height: 40,
   },
 });
 

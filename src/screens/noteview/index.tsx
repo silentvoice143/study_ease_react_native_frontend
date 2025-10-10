@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import PageWithHeader from '../../components/layout/page-with-header';
 
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PDFViewer from '../../components/common/pdf-viewer';
+import Banner from '../../components/ads/benner';
+import BannerAd from '../../components/common/bannerAds';
 
 function NoteViewScreen({ navigation, route }: any) {
-  const { url } = route.params ?? '';
-  const [driveUrl, setDriveUrl] = useState(
-    'https://drive.google.com/file/d/12ZETi4ovmVR6QptVDQkmP7GCPo4nkhED/view?usp=sharing',
-  );
+  const { url, headerTitle, from } = route.params ?? '';
+  console.log('NoteViewScreen URL:', url);
+  const [driveUrl, setDriveUrl] = useState('');
   const [pdfSource, setPdfSource] = useState<any>(null);
+  const [showTopBanner, setShowTopBanner] = useState(true);
   const convertGoogleDriveLink = (shareLink: string) => {
     // Extract file ID from Google Drive sharing link
     const match = shareLink.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -51,14 +53,17 @@ function NoteViewScreen({ navigation, route }: any) {
     })();
   }, [driveUrl]);
 
+  useEffect(() => {
+    if (url) setDriveUrl(url);
+  }, [url]);
+
   return (
-    <PageWithHeader>
+    <PageWithHeader headerTitle={headerTitle || 'Note Viewer'} from={from}>
+      {showTopBanner && <BannerAd onClose={() => setShowTopBanner(false)} />}
       <View style={{ flex: 1 }}>
         <PDFViewer
           source={{
-            uri: convertGoogleDriveLink(
-              'https://drive.google.com/file/d/12ZETi4ovmVR6QptVDQkmP7GCPo4nkhED/view?usp=sharing',
-            ),
+            uri: convertGoogleDriveLink(url),
             cache: true,
           }}
           enablePaging={false}

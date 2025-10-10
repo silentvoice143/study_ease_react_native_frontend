@@ -13,10 +13,10 @@ import SubjectScreen from '../../screens/subjects';
 import SemesterScreen from '../../screens/semester';
 import NotesPYQScreen from '../../screens/note-pyq';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import OfflineFile from '../../screens/offline';
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const Stack = createNativeStackNavigator<any>();
 
 function StreamStack() {
   return (
@@ -43,6 +43,12 @@ function BottomTabs() {
       activeIcon: require('../../assets/imgs/tab/activestream.png'),
       inActiveIcon: require('../../assets/imgs/tab/inactivestream.png'),
       component: StreamStack,
+    },
+    {
+      label: 'Offline',
+      activeIcon: require('../../assets/imgs/tab/activedownload.png'),
+      inActiveIcon: require('../../assets/imgs/tab/inactivedownload.png'),
+      component: OfflineFile,
     },
     // {
     //   label: 'Search',
@@ -146,7 +152,7 @@ function BottomTabs() {
               display: keyboardVisible ? 'none' : 'flex',
               position: 'absolute',
               bottom: verticalScale(20),
-              marginHorizontal: '30%',
+              marginHorizontal: '20%',
               height: verticalScale(64),
               borderRadius: scale(32),
               backgroundColor: COLORS.voilet.light,

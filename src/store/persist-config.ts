@@ -6,7 +6,7 @@ import { RootState } from './root-reducer';
 const persistConfig: PersistConfig<RootState> = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth'],
+  whitelist: ['auth', 'offline'],
 };
 
 export default persistConfig;

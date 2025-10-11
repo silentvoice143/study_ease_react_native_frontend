@@ -39,6 +39,7 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
   const [fileExistence, setFileExistence] = useState<Record<string, boolean>>(
     {},
   );
+  const [showingAds, setShowingAds] = useState(false);
 
   //---------ads control------------
   const [downloadAd, setDownloadAd] = useState<InterstitialAd>(() =>
@@ -109,24 +110,32 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
   }, [data, activeTab]);
 
   const showAdsAndDownload = async (item: any) => {
-    await loadAndShowInterstitialAdWithRetry({
-      adName: 'Download',
-      adInstance: downloadAd,
-      setAdInstance: setDownloadAd,
-      isAdLoaded: downloadAdLoaded,
-      setAdLoaded: setDownloadAdLoaded,
-      setLoader: setIsDownloadAdLoading,
-      maxRetries: 5,
-      onSkip: () => {
-        handleDownloadFile(item);
-        setDownloadAdLoaded(false);
-      },
-      onAdShown: () => {
-        handleDownloadFile(item);
-        setDownloadAdLoaded(false);
-      },
-      onAdDismissed() {},
-    });
+    try {
+      setShowingAds(true);
+      await loadAndShowInterstitialAdWithRetry({
+        adName: 'Download',
+        adInstance: downloadAd,
+        setAdInstance: setDownloadAd,
+        isAdLoaded: downloadAdLoaded,
+        setAdLoaded: setDownloadAdLoaded,
+        setLoader: setIsDownloadAdLoading,
+        maxRetries: 5,
+        onSkip: () => {
+          handleDownloadFile(item);
+          setDownloadAdLoaded(false);
+        },
+        onAdShown: () => {
+          setShowingAds(false);
+          setDownloadAdLoaded(false);
+        },
+        onAdDismissed() {
+          handleDownloadFile(item);
+        },
+      });
+    } catch (err) {
+    } finally {
+      setShowingAds(false);
+    }
   };
 
   const handleDownloadFile = async (item: any) => {
@@ -210,7 +219,7 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
             </View>
           </View>
 
-          {isDownloading ? (
+          {isDownloading || showingAds ? (
             <View style={styles.progressContainer}>
               <ActivityIndicator size="small" color={COLORS.voilet.dark} />
               <Text style={styles.progressText}>{progress}%</Text>
@@ -425,7 +434,9 @@ const styles = StyleSheet.create({
   progressContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: scale(60),
+    minWidth: scale(40),
+    width: scale(40),
+    height: scale(40),
   },
   progressText: {
     fontSize: scaleFont(11),

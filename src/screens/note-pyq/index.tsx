@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     height: scale(40),
   },
   progressText: {
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(10),
     color: COLORS.voilet.dark,
     fontWeight: '600',
     marginTop: verticalScale(4),

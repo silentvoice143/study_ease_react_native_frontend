@@ -212,6 +212,7 @@ const Banner: React.FC<BannerProps> = ({
   // Show loading indicator or retry status
   const showLoader = !adLoaded && !adFailed;
   const showRetryStatus = isRetrying && enableRetry;
+  console.log(adLoaded, '----loaded ads');
 
   return (
     <View style={[styles.container, style]}>
@@ -219,6 +220,18 @@ const Banner: React.FC<BannerProps> = ({
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="small" color="#888" />
           {showDebugInfo && <Text style={styles.debugText}>Loading ad...</Text>}
+        </View>
+      )}
+
+      {!shouldHide && unitId && (
+        <View style={{ height: showLoader ? 0 : +getBannerSize() }}>
+          <BannerAd
+            key={`banner-${retryCount}`}
+            unitId={unitId}
+            size={getBannerSize()}
+            onAdLoaded={handleAdLoaded}
+            onAdFailedToLoad={handleAdFailedToLoad}
+          />
         </View>
       )}
 
@@ -230,20 +243,6 @@ const Banner: React.FC<BannerProps> = ({
             {retryCount}/{maxRetries}
           </Text>
         </View>
-      )}
-
-      {adLoaded && !adFailed && unitId && (
-        <BannerAd
-          key={`banner-${retryCount}`}
-          unitId={unitId}
-          size={getBannerSize()}
-          //   requestOptions={{
-          //     requestNonPersonalizedAdsOnly: true,
-          //     keywords: ['games', 'apps'], // Add keywords to improve fill rate
-          //   }}
-          onAdLoaded={handleAdLoaded}
-          onAdFailedToLoad={handleAdFailedToLoad}
-        />
       )}
 
       {adFailed && retryCount >= maxRetries && showDebugInfo && (

@@ -25,7 +25,7 @@ const BannerAd = ({ onClose }: { onClose: () => void }) => {
         adUnitId={'ca-app-pub-5415975767472598/1623919576'}
         size="BANNER"
         maxRetries={20}
-        retryDelay={20000}
+        retryDelay={2000}
         exponentialBackoff={true}
         showDebugInfo={true}
         onAdLoaded={() => console.log('Ad ready!')}

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { store } from '../store'; // <-- Import your Redux store
 
 const api = axios.create({
-  baseURL: 'https://2331bde0cb57.ngrok-free.app',
+  baseURL: 'https://study-ease-nodejs-backend.onrender.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

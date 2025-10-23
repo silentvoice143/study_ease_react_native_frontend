@@ -61,7 +61,7 @@ export const useFileDownloader = (): UseFileDownloaderReturn => {
               id,
               title,
               localPath,
-              type: activeTab,
+              type: activeTab as any,
             }),
           );
 
@@ -88,15 +88,15 @@ export const useFileDownloader = (): UseFileDownloaderReturn => {
         const result = await download.promise;
 
         if (result.statusCode === 200) {
-          Toast.success(`Downloaded "${title}" successfully!`);
           setStatus('success');
+          setProgress(0);
 
           dispatch(
             addOfflineFile({
               id,
               title,
               localPath,
-              type: activeTab,
+              type: activeTab as any,
             }),
           );
         } else {

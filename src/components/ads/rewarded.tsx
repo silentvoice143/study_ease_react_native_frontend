@@ -4,8 +4,11 @@ import {
   InterstitialAd,
   RewardedAd,
   RewardedAdEventType,
+  RewardedInterstitialAd,
   TestIds,
 } from 'react-native-google-mobile-ads';
+import { rewarded_interstitial_set1 } from './ads-units';
+import { getRandomAdUnit } from '../../utils/get-random-ads-unit';
 
 // Ad Unit IDs
 const REWARDED_AD_UNIT_ID = __DEV__
@@ -15,6 +18,10 @@ const REWARDED_AD_UNIT_ID = __DEV__
 const INTERSTITIAL_AD_UNIT_ID = __DEV__
   ? TestIds.INTERSTITIAL
   : 'ca-app-pub-5415975767472598~1060812799';
+
+const REWARDED_INTERSTITIAL_AD_UNIT_ID = __DEV__
+  ? TestIds.REWARDED_INTERSTITIAL
+  : getRandomAdUnit(rewarded_interstitial_set1);
 
 // Ad Creation Functions
 export const createRewardedAd = () => {
@@ -78,6 +85,41 @@ export const createInterstitialAd = () => {
       'entertainment',
     ],
   });
+};
+
+export const createRewardedInterstitialAd = () => {
+  return RewardedInterstitialAd.createForAdRequest(
+    REWARDED_INTERSTITIAL_AD_UNIT_ID,
+    {
+      requestNonPersonalizedAdsOnly: true,
+      keywords: [
+        'education',
+        'learning',
+        'study',
+        'quiz',
+        'exam',
+        'mock test',
+        'school',
+        'college',
+        'student',
+        'teacher',
+        'online courses',
+        'e-learning',
+        'books',
+        'flashcards',
+        'notes',
+        'motivation',
+        'productivity',
+        'career',
+        'knowledge',
+        'general knowledge',
+        'games',
+        'apps',
+        'entertainment',
+        'movie',
+      ],
+    },
+  );
 };
 
 // Types
@@ -392,6 +434,134 @@ export const loadAndShowInterstitialAdWithRetry = async ({
   setLoader(false);
 };
 
+interface RewardedInterstitialConfig {
+  adName: string;
+  adInstance: RewardedInterstitialAd;
+  setAdInstance: React.Dispatch<React.SetStateAction<RewardedInterstitialAd>>;
+  isAdLoaded: boolean;
+  setAdLoaded: React.Dispatch<React.SetStateAction<boolean>>;
+  setLoader: React.Dispatch<React.SetStateAction<boolean>>;
+  onRewardEarned: (reward: Reward) => void;
+  onSkip?: () => void;
+  onAdShown?: () => void;
+  onAdDismissed?: () => void;
+  timeoutMs?: number;
+  maxRetries?: number;
+  retryDelay?: number;
+}
+
+export const loadAndShowRewardedInterstitialAdWithRetry = async ({
+  adName,
+  adInstance,
+  setAdInstance,
+  isAdLoaded,
+  setAdLoaded,
+  setLoader,
+  onRewardEarned,
+  onSkip,
+  onAdShown,
+  onAdDismissed,
+  timeoutMs = 15000,
+  maxRetries = 5,
+  retryDelay = 2000,
+}: RewardedInterstitialConfig) => {
+  setLoader(true);
+
+  if (isAdLoaded) {
+    console.log(`[${adName}] ✅ Already loaded, showing now`);
+    adInstance.show();
+    onAdShown?.();
+    setLoader(false);
+    return;
+  }
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`[${adName}] 🔄 Attempt ${attempt}/${maxRetries}`);
+
+    const newAd = createRewardedInterstitialAd();
+    setAdInstance(newAd);
+
+    let unsubscribeLoaded: (() => void) | undefined;
+    let unsubscribeError: (() => void) | undefined;
+    let unsubscribeReward: (() => void) | undefined;
+    let unsubscribeDismissed: (() => void) | undefined;
+
+    try {
+      await Promise.race([
+        new Promise<void>((resolve, reject) => {
+          unsubscribeLoaded = newAd.addAdEventListener(
+            RewardedAdEventType.LOADED,
+            () => {
+              console.log(`[${adName}] ✅ Loaded`);
+              setAdLoaded(true);
+              resolve();
+            },
+          );
+
+          unsubscribeError = newAd.addAdEventListener(
+            AdEventType.ERROR,
+            error => {
+              console.log(`[${adName}] ❌ Error loading:`, error);
+              reject(error);
+            },
+          );
+
+          unsubscribeReward = newAd.addAdEventListener(
+            RewardedAdEventType.EARNED_REWARD,
+            reward => {
+              console.log(`[${adName}] 🎁 Reward earned`, reward);
+              onRewardEarned(reward);
+            },
+          );
+
+          unsubscribeDismissed = newAd.addAdEventListener(
+            AdEventType.CLOSED,
+            () => {
+              console.log(`[${adName}] Ad dismissed`);
+              setAdLoaded(false);
+              onAdDismissed?.();
+            },
+          );
+
+          newAd.load();
+        }),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error('Timeout')), timeoutMs),
+        ),
+      ]);
+
+      console.log(`[${adName}] 📺 Showing ad`);
+      newAd.show();
+      onAdShown?.();
+      setLoader(false);
+      return;
+    } catch (error: any) {
+      const msg = error?.message || 'Unknown error';
+      console.warn(`[${adName}] ⚠️ Retry ${attempt} failed: ${msg}`);
+
+      unsubscribeLoaded?.();
+      unsubscribeError?.();
+      unsubscribeReward?.();
+      unsubscribeDismissed?.();
+
+      if (attempt >= maxRetries) {
+        console.error(`[${adName}] ❌ Max retries reached`);
+        onSkip?.();
+        setLoader(false);
+        return;
+      }
+
+      const delay = retryDelay * Math.pow(1.5, attempt - 1);
+      console.log(
+        `[${adName}] ⏳ Waiting ${Math.round(delay)}ms before retry...`,
+      );
+      await wait(delay);
+    }
+  }
+
+  setLoader(false);
+};
+
 /**
  * Preload ad for better performance
  */
@@ -437,5 +607,46 @@ export const preloadInterstitialAd = (
   });
 
   ad.load();
+  setAdInstance(ad);
+};
+
+/**
+ * Preload Rewarded Interstitial Ad for faster display
+ */
+export const preloadRewardedInterstitialAd = (
+  setAdInstance: React.Dispatch<React.SetStateAction<RewardedInterstitialAd>>,
+  setAdLoaded: React.Dispatch<React.SetStateAction<boolean>>,
+  onRewardEarned?: (reward: Reward) => void,
+) => {
+  const ad = createRewardedInterstitialAd();
+
+  // Listener for when ad is loaded
+  const unsubscribeLoaded = ad.addAdEventListener(
+    RewardedAdEventType.LOADED,
+    () => {
+      console.log('🎬 Rewarded Interstitial ad preloaded');
+      setAdLoaded(true);
+      unsubscribeLoaded();
+    },
+  );
+
+  // Optional listener for reward earned
+  if (onRewardEarned) {
+    ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, reward => {
+      console.log('🎁 Reward from preloaded ad:', reward);
+      onRewardEarned(reward);
+    });
+  }
+
+  // Optional: handle dismiss to clean state
+  ad.addAdEventListener(AdEventType.CLOSED, () => {
+    console.log('❎ Rewarded Interstitial ad dismissed (preloaded)');
+    setAdLoaded(false);
+  });
+
+  // Start loading ad
+  ad.load();
+
+  // Store ad instance
   setAdInstance(ad);
 };

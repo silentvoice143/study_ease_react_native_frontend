@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Banner from '../ads/benner'; // assuming your custom Banner component
+import { banner_set2 } from '../ads/ads-units';
+import { getRandomAdUnit } from '../../utils/get-random-ads-unit';
 
-const BannerAd = ({ onClose }: { onClose: () => void }) => {
+const BannerAd = ({ onClose }: { onClose?: () => void }) => {
   const [showClose, setShowClose] = useState(false);
   const [timer, setTimer] = useState(20);
 
@@ -22,7 +24,7 @@ const BannerAd = ({ onClose }: { onClose: () => void }) => {
   return (
     <View style={{}}>
       <Banner
-        adUnitId={'ca-app-pub-5415975767472598/1623919576'}
+        adUnitId={getRandomAdUnit(banner_set2)}
         size="BANNER"
         maxRetries={20}
         retryDelay={2000}
@@ -36,9 +38,8 @@ const BannerAd = ({ onClose }: { onClose: () => void }) => {
         <TouchableOpacity style={styles.closeAdButton} onPress={onClose}>
           <Text style={styles.closeAdText}>×</Text>
         </TouchableOpacity>
-      ) : (
-        <Text style={styles.timerText}>Close available in {timer}s</Text>
-      )}
+      ) : // <Text style={styles.timerText}>Close available in {timer}s</Text>
+      null}
     </View>
   );
 };

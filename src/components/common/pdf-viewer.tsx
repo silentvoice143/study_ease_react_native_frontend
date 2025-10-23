@@ -151,7 +151,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
   const handleSliderComplete = useCallback((value: number) => {
     const pageNumber = Math.round(value);
     console.log(`Slider complete: jumping to page ${pageNumber}`);
-
+    hideSliderAfterDelay();
     // Use a small delay to ensure smooth transition
     setTimeout(() => {
       setIsSliderActive(false);
@@ -164,6 +164,23 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
         pdfRef.current.setPage(pageNumber);
       }
     }, 100);
+  }, []);
+
+  const hideSliderAfterDelay = useCallback(() => {
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(sliderOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sliderTranslateY, {
+          toValue: 50,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setShowSlider(false));
+    }, 5000);
   }, []);
 
   const toggleSlider = useCallback(() => {

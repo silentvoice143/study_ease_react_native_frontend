@@ -5,7 +5,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import PageWithHeader from '../../components/layout/page-with-header';
 import {
   moderateScale,
@@ -19,8 +19,10 @@ import Card from '../../components/common/card';
 import { fetchStreams } from '../../apis/stream';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '../../hooks/use-debounce';
+import BannerAd from '../../components/common/bannerAds';
 
 const StreamScreen = ({ navigation, route }: any) => {
+  const [showTopBanner, setShowTopBanner] = useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
   const debouncedSearch = useDebounce(searchQuery, 500);
   const { stream } = route.params ?? '';
@@ -57,19 +59,26 @@ const StreamScreen = ({ navigation, route }: any) => {
         <View
           style={{
             paddingHorizontal: scale(20),
-            marginBottom: verticalScale(48),
+            marginBottom: verticalScale(12),
           }}
         >
           <SearchBox
             style={{
-              borderRadius: moderateScale(28),
-              paddingHorizontal: scale(16),
+              borderRadius: verticalScale(28),
+              paddingHorizontal: verticalScale(16),
               borderColor: COLORS.voilet.lighter,
             }}
-            height={verticalScale(48)}
+            height={verticalScale(40)}
             onChangeText={text => setSearchQuery(text as string)}
           />
         </View>
+        {showTopBanner && (
+          <BannerAd
+            onClose={() => {
+              setShowTopBanner(false);
+            }}
+          />
+        )}
 
         {streamLoading ? (
           <View style={styles.loaderContainer}>
@@ -131,6 +140,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    paddingTop: verticalScale(10),
   },
   loaderContainer: {
     flex: 1,

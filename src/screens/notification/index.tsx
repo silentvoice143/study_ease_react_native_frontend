@@ -14,31 +14,32 @@ import { notifications } from '../../apis/query-keys';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { fetchNotification } from '../../apis/notification';
 import Banner from '../../components/ads/benner';
+import BannerAd from '../../components/common/bannerAds';
 
 const { width, height } = Dimensions.get('window');
 
 // Banner Ad Component
-const BannerAd = ({ onClose }) => {
-  return (
-    <View style={styles.bannerAdContainer}>
-      <Banner
-        adUnitId={'ca-app-pub-5415975767472598/1623919576'}
-        size="BANNER"
-        maxRetries={20}
-        retryDelay={3000}
-        exponentialBackoff={true}
-        showDebugInfo={true}
-        onAdLoaded={() => console.log('Ad ready!')}
-        onRetryAttempt={attempt => console.log(`Attempt ${attempt}`)}
-      />
-      {onClose && (
-        <TouchableOpacity style={styles.closeAdButton} onPress={onClose}>
-          <Text style={styles.closeAdText}>×</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-};
+// const BannerAd = ({ onClose }: any) => {
+//   return (
+//     <View style={styles.bannerAdContainer}>
+//       <Banner
+//         adUnitId={'ca-app-pub-5415975767472598/1623919576'}
+//         size="BANNER"
+//         maxRetries={20}
+//         retryDelay={3000}
+//         exponentialBackoff={true}
+//         showDebugInfo={true}
+//         onAdLoaded={() => console.log('Ad ready!')}
+//         onRetryAttempt={attempt => console.log(`Attempt ${attempt}`)}
+//       />
+//       {onClose && (
+//         <TouchableOpacity style={styles.closeAdButton} onPress={onClose}>
+//           <Text style={styles.closeAdText}>×</Text>
+//         </TouchableOpacity>
+//       )}
+//     </View>
+//   );
+// };
 
 const NotificationScreen = ({ navigation }) => {
   const [expandedId, setExpandedId] = useState(null);
@@ -146,7 +147,7 @@ const NotificationScreen = ({ navigation }) => {
     <PageWithHeader>
       <View style={styles.container}>
         {/* Top Banner Ad - Dismissible */}
-        {showTopBanner && <BannerAd onClose={() => setShowTopBanner(false)} />}
+        {showTopBanner && <BannerAd />}
 
         <ScrollView
           style={styles.scrollContainer}
@@ -276,7 +277,7 @@ const NotificationScreen = ({ navigation }) => {
                         {(index + 1) % 3 === 0 &&
                           index !== allNotifications.length - 1 && (
                             <View style={styles.inFeedAdWrapper}>
-                              <BannerAd onClose={null} />
+                              <BannerAd />
                             </View>
                           )}
 
@@ -430,7 +431,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 40,
     minHeight: height * 0.5,
-    backgroundColor: COLORS.surface.background,
+    backgroundColor: COLORS.surface.white,
   },
   loadingText: {
     marginTop: 12,

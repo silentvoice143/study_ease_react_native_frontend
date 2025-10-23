@@ -1,6 +1,11 @@
 import { Text, TouchableOpacity, View } from 'react-native';
 import React from 'react';
-import { scale, scaleFont, verticalScale } from '../../utils/sizer';
+import {
+  moderateScale,
+  scale,
+  scaleFont,
+  verticalScale,
+} from '../../utils/sizer';
 import { COLORS } from '../../theme/colors';
 import MenuIcon from '../../assets/icons/menu-icon';
 import NotificationIcon from '../../assets/icons/notification-icon';
@@ -31,7 +36,8 @@ const Header = ({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: scale(20),
+        paddingHorizontal: verticalScale(20),
+        marginTop: verticalScale(20),
         // backgroundColor: 'red',
       }}
     >
@@ -50,9 +56,9 @@ const Header = ({
             }
           }}
           style={{
-            height: scale(48),
-            width: scale(48),
-            borderRadius: scale(32),
+            height: verticalScale(48),
+            width: verticalScale(48),
+            borderRadius: verticalScale(32),
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: COLORS.surface.white,
@@ -70,9 +76,9 @@ const Header = ({
             navigation.navigate('PublicProfile');
           }}
           style={{
-            height: scale(48),
-            width: scale(48),
-            borderRadius: scale(32),
+            height: verticalScale(48),
+            width: verticalScale(48),
+            borderRadius: verticalScale(32),
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: COLORS.surface.white,
@@ -118,9 +124,9 @@ const Header = ({
           <TouchableOpacity
             onPress={() => navigation.navigate('Notifications')}
             style={{
-              height: scale(48),
-              width: scale(48),
-              borderRadius: scale(32),
+              height: verticalScale(48),
+              width: verticalScale(48),
+              borderRadius: verticalScale(32),
               justifyContent: 'center',
               alignItems: 'center',
               backgroundColor: COLORS.surface.pink,
@@ -128,13 +134,13 @@ const Header = ({
           >
             <View
               style={{
-                width: scale(8),
-                height: scale(8),
-                borderRadius: scale(4),
+                width: verticalScale(8),
+                height: verticalScale(8),
+                borderRadius: verticalScale(4),
                 backgroundColor: COLORS.surface.white,
                 position: 'absolute',
-                right: scale(15),
-                top: scale(15),
+                right: verticalScale(15),
+                top: verticalScale(15),
               }}
             />
             <NotificationIcon size={20} stroke={4} />

@@ -144,27 +144,29 @@ function BottomTabs() {
           name={item.label}
           component={item.component}
           options={({ route }) => {
-            // 👇 Check which screen is active inside this tab
             const routeName = getFocusedRouteNameFromRoute(route) ?? '';
 
-            // Default style
             let tabBarStyle = {
               display: keyboardVisible ? 'none' : 'flex',
               position: 'absolute',
               bottom: verticalScale(20),
+              left: '5%',
+              right: '5%',
               marginHorizontal: '20%',
               height: verticalScale(64),
               borderRadius: scale(32),
               backgroundColor: COLORS.voilet.light,
-
-              // Optional shadow
               elevation: 6,
               shadowColor: COLORS.voilet.lighter,
               shadowOpacity: 0.15,
               shadowRadius: 6,
+              paddingTop: 0,
+              paddingBottom: 0,
+              paddingLeft: 0,
+              paddingRight: 0,
+              borderTopWidth: 0,
             };
 
-            // ✅ Hide tab bar when in Noteview
             if (routeName === 'Noteview') {
               tabBarStyle = { display: 'none' };
             }
@@ -172,8 +174,7 @@ function BottomTabs() {
             return {
               tabBarStyle,
               tabBarItemStyle: {
-                justifyContent: 'center',
-                alignItems: 'center',
+                height: verticalScale(64),
               },
               tabBarButton: props => (
                 <CustomTabButton

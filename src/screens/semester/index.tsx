@@ -21,13 +21,16 @@ import { fetchStreams } from '../../apis/stream';
 import { useQuery } from '@tanstack/react-query';
 import { streams } from '../../apis/query-keys';
 import Banner from '../../components/ads/benner';
+import { banner_set1 } from '../../components/ads/ads-units';
+import { getRandomAdUnit } from '../../utils/get-random-ads-unit';
 
 // Banner Ad Component - Replace with your actual ad component
-const BannerAd = ({ onClose }) => {
+const BannerAd = ({ onClose }: any) => {
   return (
-    <View style={styles.bannerAdContainer}>
+    <View style={[{ backgroundColor: COLORS.surface.background }]}>
       <Banner
-        size="ADAPTIVE_BANNER"
+        adUnitId={getRandomAdUnit(banner_set1)}
+        size="BANNER"
         maxRetries={20}
         retryDelay={20000}
         exponentialBackoff={true}

@@ -4,9 +4,7 @@ import {
   Text,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
@@ -21,13 +19,15 @@ import { notifications } from '../../apis/query-keys';
 import { fetchNotification } from '../../apis/notification';
 import { COLORS } from '../../theme/colors';
 import Banner from '../../components/ads/benner';
-import NativeAd from '../../components/ads/native';
+import NetInfo from '@react-native-community/netinfo';
+import { Toast } from 'toastify-react-native';
+import { Fonts } from '../../theme/fonts';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const NOTIFICATION_BOX_HEIGHT = SCREEN_HEIGHT * 0.3;
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+const NOTIFICATION_BOX_HEIGHT = SCREEN_HEIGHT * 0.4;
 
 const Home = ({ navigation }: any) => {
-  const flatListRef = useRef(null);
+  const notificationScrollRef = useRef(null);
   const autoScrollTimerRef = useRef(null);
   const scrollPositionRef = useRef(0);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
@@ -55,15 +55,6 @@ const Home = ({ navigation }: any) => {
   } = useInfiniteQuery({
     queryKey: notifications(1, limit),
     queryFn: ({ pageParam = 1 }) => fetchNotification(pageParam, limit),
-    // getNextPageParam: (lastPage, allPages) => {
-    //   if (
-    //     lastPage.hasMore ||
-    //     (lastPage.totalPages && allPages.length < lastPage.totalPages)
-    //   ) {
-    //     return allPages.length + 1;
-    //   }
-    //   return undefined;
-    // },
     getNextPageParam: (lastPage, allPages) => {
       const nextPage = allPages.length + 1;
 
@@ -84,7 +75,6 @@ const Home = ({ navigation }: any) => {
     staleTime: 1000 * 60 * 5,
   });
 
-  console.log(notificationsData, '------notificationsData');
   // Flatten all notifications
   const allNotifications =
     notificationsData?.pages?.flatMap(page => page.notifications) || [];
@@ -101,23 +91,22 @@ const Home = ({ navigation }: any) => {
 
     const startAutoScroll = () => {
       autoScrollTimerRef.current = setInterval(() => {
-        if (flatListRef.current && !isUserScrolling) {
-          const maxScrollOffset = allNotifications.length * 80; // Approximate item height
+        if (notificationScrollRef.current && !isUserScrolling) {
+          const maxScrollOffset = allNotifications.length * 80;
           const newOffset = scrollPositionRef.current + 1;
 
           if (newOffset >= maxScrollOffset - NOTIFICATION_BOX_HEIGHT) {
-            // Reset to top when reaching end
             scrollPositionRef.current = 0;
-            flatListRef.current.scrollToOffset({ offset: 0, animated: false });
+            notificationScrollRef.current.scrollTo({ y: 0, animated: false });
           } else {
             scrollPositionRef.current = newOffset;
-            flatListRef.current.scrollToOffset({
-              offset: newOffset,
+            notificationScrollRef.current.scrollTo({
+              y: newOffset,
               animated: false,
             });
           }
         }
-      }, 50); // Adjust speed here (lower = faster)
+      }, 50);
     };
 
     startAutoScroll();
@@ -139,18 +128,16 @@ const Home = ({ navigation }: any) => {
 
   // Handle user touch end
   const handleScrollEndDrag = () => {
-    // Re-enable auto-scroll after 2 seconds of inactivity
     setTimeout(() => {
       setIsUserScrolling(false);
     }, 2000);
   };
 
   // Handle scroll for infinite loading
-  const handleScroll = event => {
+  const handleNotificationScroll = event => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     scrollPositionRef.current = contentOffset.y;
 
-    // Check if near bottom for infinite scroll
     const paddingToBottom = 100;
     const isCloseToBottom =
       layoutMeasurement.height + contentOffset.y >=
@@ -170,25 +157,17 @@ const Home = ({ navigation }: any) => {
     });
   };
 
-  // Render notification item
-  const renderNotificationItem = ({ item, index }) => (
-    <TouchableOpacity
-      onPress={() => handleNotificationPress(item, index)}
-      activeOpacity={0.7}
-    >
-      <NotificationItem text={item.title || item.description} />
-    </TouchableOpacity>
-  );
+  useEffect(() => {
+    // ✅ Listen to internet connection
+    const unsubscribe = NetInfo.addEventListener(state => {
+      if (state.isConnected && state.isInternetReachable === false) {
+        Toast.info('No internet access');
+        navigation.naviigate('Offline');
+      }
+    });
 
-  // Render footer
-  const renderFooter = () => {
-    if (!isFetchingNextPage) return null;
-    return (
-      <View style={styles.footerLoader}>
-        <ActivityIndicator size="small" color="#8b5cf6" />
-      </View>
-    );
-  };
+    return () => unsubscribe();
+  }, []);
 
   const StreamCard = ({ stream }: any) => (
     <TouchableOpacity
@@ -214,9 +193,16 @@ const Home = ({ navigation }: any) => {
     </View>
   );
 
+  // Check if screen is wide enough for 2 ads
+  const showTwoAds = SCREEN_WIDTH > 650;
+
   return (
     <PageWithHeader>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Streams Section */}
         <View style={{ paddingHorizontal: scale(16) }}>
           <LinearGradient
@@ -231,16 +217,15 @@ const Home = ({ navigation }: any) => {
               showsHorizontalScrollIndicator={false}
               style={styles.streamsContainer}
               contentContainerStyle={styles.streamsContent}
+              nestedScrollEnabled={true}
             >
-              {isStreamLoading ? (
-                // Show 3 loading skeleton cards
+              {isStreamLoading || data?.streams.length === 0 ? (
                 <>
                   <LoadingStreamCard />
                   <LoadingStreamCard />
                   <LoadingStreamCard />
                 </>
               ) : (
-                // Show actual stream data
                 data?.streams.map((stream, index) => (
                   <StreamCard key={index} stream={stream} />
                 ))
@@ -249,30 +234,68 @@ const Home = ({ navigation }: any) => {
           </LinearGradient>
         </View>
 
-        {/* Notifications Section */}
+        {/* Advertisements Section */}
+        <View style={styles.advertisementsSection}>
+          <View style={styles.adsRow}>
+            <View
+              style={[styles.adWrapper, !showTwoAds && styles.adWrapperFull]}
+            >
+              <Banner
+                adUnitId="ca-app-pub-5415975767472598/3219555351"
+                size="BANNER"
+                maxRetries={20}
+                retryDelay={2000}
+                exponentialBackoff={true}
+                showDebugInfo={true}
+                onAdLoaded={() => console.log('Ad 1 ready!')}
+                onRetryAttempt={attempt =>
+                  console.log(`Ad 1 Attempt ${attempt}`)
+                }
+              />
+            </View>
 
-        <View
-          style={[
-            styles.notificationsSection,
-            { height: NOTIFICATION_BOX_HEIGHT + 80 },
-          ]}
-        >
+            {showTwoAds && (
+              <View style={styles.adWrapper}>
+                <Banner
+                  adUnitId="ca-app-pub-5415975767472598/3219555351"
+                  size="BANNER"
+                  maxRetries={20}
+                  retryDelay={2000}
+                  exponentialBackoff={true}
+                  showDebugInfo={true}
+                  onAdLoaded={() => console.log('Ad 2 ready!')}
+                  onRetryAttempt={attempt =>
+                    console.log(`Ad 2 Attempt ${attempt}`)
+                  }
+                />
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Notifications Section */}
+        <View style={styles.notificationsSection}>
           <View style={styles.notificationHeader}>
             <Text style={styles.sectionTitle}>Notifications</Text>
             <TouchableOpacity
               style={styles.viewAllButton}
               onPress={() => navigation.navigate('Notifications')}
             >
-              <Text style={styles.viewAllText}>View All</Text>
+              <Text
+                style={[
+                  styles.viewAllText,
+                  { fontFamily: Fonts.inter.medium, lineHeight: 16 },
+                ]}
+              >
+                View All
+              </Text>
             </TouchableOpacity>
           </View>
 
           <View
             style={[
               styles.notificationBox,
-              {
-                height: NOTIFICATION_BOX_HEIGHT,
-              },
+              { height: NOTIFICATION_BOX_HEIGHT },
             ]}
           >
             {isNotificationsLoading ? (
@@ -282,47 +305,40 @@ const Home = ({ navigation }: any) => {
               </View>
             ) : allNotifications.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No notifications available</Text>
+                <Text style={[styles.emptyText]}>
+                  No notifications available
+                </Text>
               </View>
             ) : (
-              <FlatList
-                ref={flatListRef}
-                data={allNotifications}
-                renderItem={renderNotificationItem}
-                keyExtractor={(item, index) => `${item.id}-${index}`}
+              <ScrollView
+                ref={notificationScrollRef}
                 showsVerticalScrollIndicator={false}
                 onScrollBeginDrag={handleScrollBeginDrag}
                 onScrollEndDrag={handleScrollEndDrag}
                 onMomentumScrollEnd={handleScrollEndDrag}
-                onScroll={handleScroll}
+                onScroll={handleNotificationScroll}
                 scrollEventThrottle={16}
-                ListFooterComponent={renderFooter}
-                removeClippedSubviews={true}
-                maxToRenderPerBatch={10}
-                windowSize={5}
-              />
+                nestedScrollEnabled={true}
+              >
+                {allNotifications.map((item, index) => (
+                  <TouchableOpacity
+                    key={`${item.id}-${index}`}
+                    onPress={() => handleNotificationPress(item, index)}
+                    activeOpacity={0.7}
+                  >
+                    <NotificationItem text={item.title || item.description} />
+                  </TouchableOpacity>
+                ))}
+                {isFetchingNextPage && (
+                  <View style={styles.footerLoader}>
+                    <ActivityIndicator size="small" color="#8b5cf6" />
+                  </View>
+                )}
+              </ScrollView>
             )}
           </View>
         </View>
-
-        {/* Advertisements Section */}
-        <View style={styles.advertisementsSection}>
-          {/* <Text style={styles.sectionTitle}>Advertisements</Text>
-          <View style={styles.adPlaceholder}>
-            <Text style={styles.adText}>ADS</Text>
-          </View> */}
-          <Banner
-            adUnitId="ca-app-pub-5415975767472598/3219555351"
-            size="BANNER"
-            maxRetries={20}
-            retryDelay={2000}
-            exponentialBackoff={true}
-            showDebugInfo={true}
-            onAdLoaded={() => console.log('Ad ready!')}
-            onRetryAttempt={attempt => console.log(`Attempt ${attempt}`)}
-          />
-        </View>
-      </View>
+      </ScrollView>
     </PageWithHeader>
   );
 };
@@ -330,12 +346,11 @@ const Home = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface.white,
+    backgroundColor: COLORS.surface.background,
   },
-  scrollView: {
-    flex: 1,
+  scrollContent: {
+    paddingBottom: verticalScale(100),
   },
-
   headerTitle: {
     color: '#999',
     fontSize: 16,
@@ -391,8 +406,8 @@ const styles = StyleSheet.create({
   streamCard: {
     backgroundColor: 'white',
     borderRadius: 12,
-    padding: 15,
-    minWidth: 100,
+    padding: verticalScale(16),
+    minWidth: scale(100),
     alignItems: 'center',
     marginRight: 15,
   },
@@ -406,7 +421,6 @@ const styles = StyleSheet.create({
     color: '#666',
     fontSize: 12,
   },
-  // Skeleton loading styles
   skeletonTitle: {
     width: 60,
     height: 16,
@@ -422,7 +436,6 @@ const styles = StyleSheet.create({
   },
   notificationsSection: {
     padding: 20,
-    height: '45%',
   },
   sectionTitle: {
     color: '#333',
@@ -430,10 +443,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
   },
-
   advertisementsSection: {
     paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 20,
+  },
+  adsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  adWrapper: {
+    flex: 1,
+    minWidth: 300,
+    maxWidth: '48%',
+    alignItems: 'center',
+  },
+  adWrapperFull: {
+    maxWidth: '100%',
   },
   adPlaceholder: {
     backgroundColor: '#ddd',
@@ -455,19 +483,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
   },
-
-  //notification styles
-
   notificationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
   },
-
   viewAllButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: verticalScale(12),
+    paddingVertical: verticalScale(6),
     backgroundColor: '#8b5cf6',
     borderRadius: 6,
   },
@@ -477,7 +501,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   notificationBox: {
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.surface.background,
     borderRadius: 12,
     overflow: 'hidden',
   },

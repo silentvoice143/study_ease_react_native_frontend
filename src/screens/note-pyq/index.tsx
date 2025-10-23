@@ -28,9 +28,13 @@ import Banner from '../../components/ads/benner';
 import {
   createRewardedAd,
   loadAndShowInterstitialAdWithRetry,
+  loadAndShowRewardedInterstitialAdWithRetry,
+  preloadRewardedInterstitialAd,
 } from '../../components/ads/rewarded';
 import { InterstitialAd } from 'react-native-google-mobile-ads';
 import { useFocusEffect } from '@react-navigation/native';
+import { banner_set2 } from '../../components/ads/ads-units';
+import { getRandomAdUnit } from '../../utils/get-random-ads-unit';
 
 const NotesPYQScreen = ({ navigation, route }: any) => {
   const { subjectId, initialTab } = route.params ?? {};
@@ -42,9 +46,8 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
   const [showingAds, setShowingAds] = useState(false);
 
   //---------ads control------------
-  const [downloadAd, setDownloadAd] = useState<InterstitialAd>(() =>
-    createRewardedAd(),
-  );
+
+  const [downloadAd, setDownloadAd] = useState<any>(() => null);
   const [downloadAdLoaded, setDownloadAdLoaded] = useState(false);
   const [isDownloadAdLoading, setIsDownloadAdLoading] = useState(false);
 
@@ -110,9 +113,10 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
   }, [data, activeTab]);
 
   const showAdsAndDownload = async (item: any) => {
+    let rewardEarned = false;
     try {
       setShowingAds(true);
-      await loadAndShowInterstitialAdWithRetry({
+      await loadAndShowRewardedInterstitialAdWithRetry({
         adName: 'Download',
         adInstance: downloadAd,
         setAdInstance: setDownloadAd,
@@ -120,16 +124,37 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
         setAdLoaded: setDownloadAdLoaded,
         setLoader: setIsDownloadAdLoading,
         maxRetries: 5,
+
+        // Called if ad fails to load/show even after retries
         onSkip: () => {
           handleDownloadFile(item);
           setDownloadAdLoaded(false);
         },
+
+        // Called once ad is successfully displayed
         onAdShown: () => {
           setShowingAds(false);
           setDownloadAdLoaded(false);
         },
-        onAdDismissed() {
+
+        // Called if ad is closed (whether user watched fully or not)
+        onAdDismissed: () => {
+          // ✅ Only show toast if reward wasn't earned
+          if (!rewardEarned) {
+            Toast.show({
+              type: 'info',
+              text1: 'View full ad to download the file',
+            });
+            return;
+          }
           handleDownloadFile(item);
+          setDownloadAdLoaded(false);
+        },
+
+        // Called when user earns the reward
+        onRewardEarned: reward => {
+          rewardEarned = true;
+          console.log('User earned reward:', reward);
         },
       });
     } catch (err) {
@@ -140,6 +165,7 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
 
   const handleDownloadFile = async (item: any) => {
     setDownloadingId(item.id);
+    console.log('downloading...');
     await downloadFile(item, activeTab);
 
     // Update file existence after download
@@ -156,7 +182,6 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
       const localPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
 
       await RNFS.unlink(localPath);
-      Toast.success(`Deleted "${item.title}" successfully!`);
 
       // Update Redux store
       dispatch(removeOfflineFile(item.id));
@@ -169,11 +194,18 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const BannerAd = ({ onClose }) => {
+  useEffect(() => {
+    // Preload ad on mount
+    preloadRewardedInterstitialAd(setDownloadAd, setDownloadAdLoaded, reward =>
+      console.log('User earned reward:', reward),
+    );
+  }, []);
+
+  const BannerAd = ({ onClose }: any) => {
     return (
       <View style={styles.bannerAdContainer}>
         <Banner
-          adUnitId={'ca-app-pub-5415975767472598/1623919576'}
+          adUnitId={getRandomAdUnit(banner_set2)}
           size="BANNER"
           maxRetries={20}
           retryDelay={20000}

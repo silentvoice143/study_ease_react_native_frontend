@@ -165,7 +165,7 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
               paddingHorizontal: scale(16),
               borderColor: COLORS.voilet.lighter,
             }}
-            height={verticalScale(48)}
+            height={verticalScale(40)}
           />
         </View>
 

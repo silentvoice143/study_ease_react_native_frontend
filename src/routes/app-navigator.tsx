@@ -10,21 +10,11 @@ export default function AppNavigator() {
       .then(adapterStatuses => {
         console.log('AdMob initialized');
       });
-    // mobileAds()
-    //   .setRequestConfiguration({
-    //     maxAdContentRating: MaxAdContentRating.PG,
-    //     tagForChildDirectedTreatment: false,
-    //     tagForUnderAgeOfConsent: false,
-    //     testDeviceIdentifiers: ['EMULATOR'], // <- important
-    //   })
-    //   .then(() => console.log('AdMob configuration set'));
   }, []);
 
   return (
     <NavigationContainer>
       <PublicRoutes />
-      {/* <BottomTabs /> */}
-      {/* <MyTabs /> */}
     </NavigationContainer>
   );
 }

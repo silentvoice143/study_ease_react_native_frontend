@@ -26,7 +26,7 @@ type SearchBoxProps = TextInputProps & {
 export default function SearchBox({
   placeholder = 'Search...',
   variant = 'fullWidth',
-  height = 40,
+  height = verticalScale(40),
   width: fixedWidth,
   minWidth,
   style,
@@ -44,10 +44,10 @@ export default function SearchBox({
     boxStyle.push({ width: '100%' });
   } else if (variant === 'fixedWidth') {
     if (fixedWidth) {
-      boxStyle.push({ width: scale(fixedWidth) });
+      boxStyle.push({ width: verticalScale(fixedWidth) });
     }
     if (minWidth) {
-      boxStyle.push({ minWidth: scale(minWidth) });
+      boxStyle.push({ minWidth: verticalScale(minWidth) });
     }
   }
 
@@ -66,9 +66,9 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: COLORS.voilet.light,
-    borderRadius: scale(24),
+    borderRadius: verticalScale(24),
     height: verticalScale(48),
-    paddingHorizontal: scale(14),
+    paddingHorizontal: verticalScale(14),
     backgroundColor: '#fff',
   },
 });

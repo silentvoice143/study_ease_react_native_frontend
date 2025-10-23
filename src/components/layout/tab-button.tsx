@@ -1,19 +1,16 @@
-// components/CustomTabButton.tsx
 import React from 'react';
 import {
   TouchableOpacity,
   Image,
   StyleSheet,
-  GestureResponderEvent,
   ImageSourcePropType,
   View,
 } from 'react-native';
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { COLORS } from '../../theme/colors';
-import { moderateScale } from '../../utils/sizer';
+import { verticalScale } from '../../utils/sizer';
 
 type CustomProps = BottomTabBarButtonProps & {
-  /** icons can be require(...) or { uri: string } */
   activeIcon: ImageSourcePropType;
   inActiveIcon: ImageSourcePropType;
 };
@@ -23,24 +20,14 @@ export default function CustomTabButton({ ...props }: any) {
     activeIcon,
     inActiveIcon,
     onPress,
-    accessibilityState,
     'aria-selected': selected,
   } = props;
-  console.log(props);
 
   return (
-    <View
-      style={{
-        height: moderateScale(48),
-        width: moderateScale(60),
-        borderRadius: moderateScale(24),
-        overflow: 'hidden',
-      }}
-    >
+    <View style={styles.wrapper}>
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={onPress}
-        // onLongPress={handleLongPress}
         style={styles.container}
       >
         <Image
@@ -53,19 +40,25 @@ export default function CustomTabButton({ ...props }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    backgroundColor: COLORS.surface.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  container: {
+    backgroundColor: COLORS.surface.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: verticalScale(48),
+    width: verticalScale(48),
+    borderRadius: verticalScale(24),
+  },
   icon: {
-    width: 24,
-    height: 24,
+    width: verticalScale(24),
+    height: verticalScale(24),
     resizeMode: 'contain',
   },
   active: {
-    // optional highlight when focused
     tintColor: '#6c63ff',
   },
 });

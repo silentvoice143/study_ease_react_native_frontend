@@ -4,8 +4,10 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
+  Animated,
 } from 'react-native';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import PageWithHeader from '../../components/layout/page-with-header';
 import {
   moderateScale,
@@ -23,6 +25,7 @@ import { Toast } from 'toastify-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
 import BannerAd from '../../components/common/bannerAds';
+import { LinearGradient } from 'react-native-linear-gradient';
 
 type Subject = {
   id: number;
@@ -52,8 +55,8 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
   const { streamId, semester } = route.params ?? { streamId: '', semester: 0 };
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showTopBanner, setShowTopBanner] = useState(true);
-
-  console.log('Stream ID in SubjectScreen:', streamId);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   const queryOptions: UseQueryOptions<Subject[], Error> = {
     queryKey: subjects(streamId, semester),
@@ -65,9 +68,23 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const { data, isLoading, isError, error } = useQuery(queryOptions);
 
-  console.log('Subjects Data:', isLoading, isError, error, data);
+  useEffect(() => {
+    if (data && data.length > 0) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [data]);
 
-  // Filter subjects based on search query
   const filteredSubjects = useMemo(() => {
     if (!data) return [];
     if (!searchQuery.trim()) return data;
@@ -82,8 +99,11 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
     if (isLoading) {
       return (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={COLORS.voilet.dark} />
-          <Text style={styles.loadingText}>Loading subjects...</Text>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.voilet.dark} />
+            <Text style={styles.loadingText}>Fetching your subjects...</Text>
+            <Text style={styles.loadingSubText}>This won't take long</Text>
+          </View>
         </View>
       );
     }
@@ -91,10 +111,16 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
     if (isError) {
       return (
         <View style={styles.centerContainer}>
-          <Text style={styles.errorText}>Failed to load subjects</Text>
-          <Text style={styles.errorSubText}>
-            {error?.message || 'Please try again later'}
-          </Text>
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorIcon}>⚠️</Text>
+            <Text style={styles.errorText}>Oops! Something went wrong</Text>
+            <Text style={styles.errorSubText}>
+              {error?.message || 'Unable to load subjects. Please try again.'}
+            </Text>
+            <TouchableOpacity style={styles.retryButton}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       );
     }
@@ -102,10 +128,13 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
     if (!data || data.length === 0) {
       return (
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyText}>No subjects available</Text>
-          <Text style={styles.emptySubText}>
-            Subjects will appear here once added
-          </Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>📚</Text>
+            <Text style={styles.emptyText}>No subjects yet</Text>
+            <Text style={styles.emptySubText}>
+              Subjects will appear here once they're added to your curriculum
+            </Text>
+          </View>
         </View>
       );
     }
@@ -113,81 +142,102 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
     if (filteredSubjects.length === 0) {
       return (
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyText}>No subjects found</Text>
-          <Text style={styles.emptySubText}>
-            Try searching with different keywords
-          </Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🔍</Text>
+            <Text style={styles.emptyText}>No matches found</Text>
+            <Text style={styles.emptySubText}>
+              Try using different keywords in your search
+            </Text>
+          </View>
         </View>
       );
     }
 
     return (
-      <View
+      <Animated.View
         style={{
           paddingHorizontal: scale(20),
           paddingBottom: verticalScale(100),
-          gap: verticalScale(16),
+          gap: verticalScale(12),
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
         }}
       >
-        {filteredSubjects.map((item: Subject) => (
-          <SubjectCard
+        {filteredSubjects.map((item: Subject, index: number) => (
+          <Animated.View
             key={item.id}
-            text={item.name}
-            subtext="Select the subject and download notes and pyqs"
-            onPress={() => {
-              navigation.navigate('StreamsTab', {
-                screen: 'Notes & PYQ',
-                params: {
-                  subjectId: +item.id,
-                  initialTab: 'notes',
+            style={{
+              opacity: fadeAnim,
+              transform: [
+                {
+                  translateY: slideAnim.interpolate({
+                    inputRange: [0, 50],
+                    outputRange: [0, 50 + index * 10],
+                  }),
                 },
-              });
+              ],
             }}
-          />
+          >
+            <SubjectCard
+              text={item.name}
+              subtext="Tap to access notes, PYQs & study materials"
+              onPress={() => {
+                navigation.navigate('StreamsTab', {
+                  screen: 'Notes & PYQ',
+                  params: {
+                    subjectId: +item.id,
+                    initialTab: 'notes',
+                  },
+                });
+              }}
+            />
+          </Animated.View>
         ))}
-      </View>
+      </Animated.View>
     );
   };
 
   return (
     <PageWithHeader>
       <View style={styles.container}>
-        {showTopBanner && <BannerAd />}
-        <View
-          style={{
-            marginTop: verticalScale(10),
-            paddingHorizontal: scale(20),
-            marginBottom: verticalScale(20),
-          }}
+        {/* Header Section with Gradient */}
+        <LinearGradient
+          colors={[COLORS.voilet.dark, COLORS.voilet.light]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.headerGradient}
         >
-          <SearchBox
-            placeholder="Search for subjects..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            style={{
-              borderRadius: moderateScale(28),
-              paddingHorizontal: scale(16),
-
-              borderColor: COLORS.voilet.lighter,
-            }}
-            height={verticalScale(48)}
-          />
-        </View>
-
-        {/* Results count */}
-        {!isLoading && data && data.length > 0 && (
-          <View style={styles.resultsContainer}>
-            <Text style={styles.resultsText}>
-              {searchQuery.trim()
-                ? `${filteredSubjects.length} of ${data.length} subjects`
-                : `${data.length} subjects available`}
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Semester {semester}</Text>
+            <Text style={styles.headerSubtitle}>
+              Choose a subject to continue
             </Text>
+          </View>
+        </LinearGradient>
+
+        {/* Banner Ad */}
+        {showTopBanner && (
+          <View style={styles.bannerContainer}>
+            <BannerAd />
           </View>
         )}
 
+        {/* Search Section */}
+        <View style={styles.searchContainer}>
+          <SearchBox
+            placeholder="Search subjects..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            height={verticalScale(48)}
+            style={{ paddingHorizontal: scale(14) }}
+          />
+        </View>
+
+        {/* Content Section */}
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
           {renderContent()}
         </ScrollView>
@@ -201,158 +251,166 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.surface.white,
   },
+  headerGradient: {
+    paddingTop: verticalScale(20),
+    paddingBottom: verticalScale(24),
+    paddingHorizontal: scale(20),
+  },
+  headerContent: {
+    gap: verticalScale(4),
+  },
+  headerTitle: {
+    fontSize: scaleFont(28),
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  headerSubtitle: {
+    fontSize: scaleFont(14),
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: '400',
+  },
+  bannerContainer: {
+    marginTop: verticalScale(12),
+  },
+  searchContainer: {
+    paddingHorizontal: scale(20),
+    marginTop: verticalScale(20),
+    marginBottom: verticalScale(16),
+  },
+  // searchBox: {
+  //   borderRadius: moderateScale(16),
+  //   paddingHorizontal: scale(16),
+  //   borderColor: '#E8EAED',
+  //   backgroundColor: '#FFFFFF',
+  //   shadowColor: '#000',
+  //   shadowOffset: { width: 0, height: 2 },
+  //   shadowOpacity: 0.05,
+  //   shadowRadius: 8,
+  //   elevation: 2,
+  // },
+  statsBar: {
+    flexDirection: 'row',
+    marginBottom: verticalScale(16),
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scale(4),
+    paddingHorizontal: scale(20),
+  },
+  statNumber: {
+    fontSize: scaleFont(16),
+    fontWeight: '700',
+    color: COLORS.voilet.dark,
+    marginBottom: verticalScale(2),
+  },
+  statLabel: {
+    fontSize: scaleFont(12),
+    color: '#666',
+    fontWeight: '500',
+  },
+  statDivider: {
+    width: 1,
+    height: verticalScale(32),
+    backgroundColor: '#E8EAED',
+  },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   centerContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: verticalScale(60),
-    paddingHorizontal: scale(20),
+    paddingHorizontal: scale(32),
     minHeight: verticalScale(300),
   },
+  loadingContainer: {
+    alignItems: 'center',
+    gap: verticalScale(12),
+  },
   loadingText: {
-    fontSize: scaleFont(14),
-    color: '#666',
-    marginTop: verticalScale(12),
-  },
-  emptyText: {
     fontSize: scaleFont(16),
-    color: '#999',
+    color: '#333',
     fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: verticalScale(8),
+    marginTop: verticalScale(8),
   },
-  emptySubText: {
+  loadingSubText: {
     fontSize: scaleFont(13),
-    color: '#BBB',
-    textAlign: 'center',
+    color: '#999',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    gap: verticalScale(12),
+    backgroundColor: '#FFFFFF',
+    padding: scale(24),
+    borderRadius: moderateScale(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  errorIcon: {
+    fontSize: scaleFont(48),
+    marginBottom: verticalScale(8),
   },
   errorText: {
-    fontSize: scaleFont(16),
+    fontSize: scaleFont(18),
     color: '#E74C3C',
-    fontWeight: '600',
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: verticalScale(8),
   },
   errorSubText: {
-    fontSize: scaleFont(13),
-    color: '#999',
+    fontSize: scaleFont(14),
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: scaleFont(20),
+  },
+  retryButton: {
+    backgroundColor: COLORS.voilet.dark,
+    paddingHorizontal: scale(32),
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(24),
+    marginTop: verticalScale(8),
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: scaleFont(14),
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    gap: verticalScale(12),
+    backgroundColor: '#FFFFFF',
+    padding: scale(32),
+    borderRadius: moderateScale(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  emptyIcon: {
+    fontSize: scaleFont(64),
+    marginBottom: verticalScale(8),
+  },
+  emptyText: {
+    fontSize: scaleFont(18),
+    color: '#333',
+    fontWeight: '700',
     textAlign: 'center',
   },
-  resultsContainer: {
-    paddingHorizontal: scale(20),
-    marginBottom: verticalScale(12),
-  },
-  resultsText: {
-    fontSize: scaleFont(13),
-    color: '#666',
-    fontWeight: '500',
-  },
-  headerTitle: {
+  emptySubText: {
+    fontSize: scaleFont(14),
     color: '#999',
-    fontSize: 16,
-    marginBottom: 20,
-    fontWeight: '400',
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
-  profileCircle: {
-    width: 50,
-    height: 50,
-    backgroundColor: 'white',
-    borderRadius: 25,
-  },
-  userProfile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  userAvatar: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#ff69b4',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  streamsSection: {
-    borderRadius: 15,
-    paddingHorizontal: scale(24),
-    paddingVertical: verticalScale(36),
-  },
-  streamsTitle: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 15,
-  },
-  streamsContainer: {
-    flexDirection: 'row',
-  },
-  streamsContent: {
-    paddingRight: 20,
-  },
-  streamCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 15,
-    minWidth: 100,
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  streamCode: {
-    color: '#333',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  streamSubtitle: {
-    color: '#666',
-    fontSize: 12,
-  },
-  notificationsSection: {
-    padding: 20,
-    height: '50%',
-  },
-  sectionTitle: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 15,
-  },
-  advertisementsSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  adPlaceholder: {
-    backgroundColor: '#ddd',
-    height: 80,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 15,
-  },
-  adText: {
-    color: '#666',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  bottomButton: {
-    backgroundColor: '#444',
-    height: 50,
-    borderRadius: 25,
-    marginHorizontal: 20,
-    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: scaleFont(20),
+    maxWidth: scale(240),
   },
 });
 

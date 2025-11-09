@@ -206,7 +206,11 @@ const Home = ({ navigation }: any) => {
         {/* Streams Section */}
         <View style={{ paddingHorizontal: scale(16) }}>
           <LinearGradient
-            colors={['#8b5cf6', '#7c3aed']}
+            colors={[
+              COLORS.voilet.dark,
+              COLORS.surface.pink,
+              COLORS.voilet.dark,
+            ]}
             style={styles.streamsSection}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}

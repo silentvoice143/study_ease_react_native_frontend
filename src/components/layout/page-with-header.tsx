@@ -38,11 +38,14 @@ const PageWithHeader = ({
         backgroundColor={COLORS.voilet.light}
         barStyle="dark-content"
       />
-      <LinearGradient colors={[COLORS.voilet.light, COLORS.surface.white]}>
+      <LinearGradient
+        style={{ borderBottomWidth: 1, borderColor: COLORS.voilet.lighter }}
+        colors={[COLORS.voilet.light, COLORS.surface.white]}
+      >
         <Header headerTitle={headerTitle} navigateBack={from ?? ''} />
       </LinearGradient>
 
-      <View style={{ flex: 1, paddingTop: verticalScale(12) }}>{children}</View>
+      <View style={{ flex: 1 }}>{children}</View>
       {/* {!keyboardVisible && !hideNavforPath.includes(path.name) && (
         <View
           style={{

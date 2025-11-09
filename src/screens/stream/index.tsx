@@ -136,7 +136,7 @@ const StreamScreen = ({ navigation, route }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface.background,
+    backgroundColor: COLORS.surface.white,
   },
   scrollView: {
     flex: 1,

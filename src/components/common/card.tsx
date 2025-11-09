@@ -7,15 +7,14 @@ import {
   GestureResponderEvent,
   Animated,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import {
   moderateScale,
   scale,
   scaleFont,
   verticalScale,
 } from '../../utils/sizer';
-import { COLORS } from '../../theme/colors';
 import DownloadIcon from '../../assets/icons/download-icon';
+import { COLORS } from '../../theme/colors';
 
 type CardProps = {
   text: string;
@@ -35,7 +34,7 @@ export default function Card({
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 0.98,
+      toValue: 0.97,
       useNativeDriver: true,
     }).start();
   };
@@ -43,15 +42,15 @@ export default function Card({
   const handlePressOut = () => {
     Animated.spring(scaleAnim, {
       toValue: 1,
-      friction: 3,
-      tension: 40,
+      friction: 4,
+      tension: 50,
       useNativeDriver: true,
     }).start();
   };
 
   const handleButtonPressIn = () => {
     Animated.spring(buttonScale, {
-      toValue: 0.92,
+      toValue: 0.94,
       useNativeDriver: true,
     }).start();
   };
@@ -59,8 +58,8 @@ export default function Card({
   const handleButtonPressOut = () => {
     Animated.spring(buttonScale, {
       toValue: 1,
-      friction: 3,
-      tension: 40,
+      friction: 4,
+      tension: 50,
       useNativeDriver: true,
     }).start();
   };
@@ -82,34 +81,39 @@ export default function Card({
     >
       <TouchableOpacity
         style={styles.card}
-        activeOpacity={0.95}
+        activeOpacity={0.96}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
       >
-        {/* Book/Folder Icon Decoration */}
-        <View style={styles.decorativeCorner}>
-          <View style={styles.cornerTriangle} />
+        {/* Gradient accent line */}
+        <View style={styles.accentLine} />
+
+        {/* Subtle background pattern */}
+        <View style={styles.backgroundPattern}>
+          <View style={styles.patternCircle1} />
+          <View style={styles.patternCircle2} />
         </View>
 
         <View style={styles.cardInner}>
-          {/* Document Icon */}
-          <View style={styles.iconCircle}>
-            <View style={styles.documentLines}>
-              <View style={styles.docLine1} />
-              <View style={styles.docLine2} />
-              <View style={styles.docLine3} />
+          {/* Elegant document icon */}
+          <View style={styles.iconContainer}>
+            <View style={styles.iconBackground}>
+              <View style={styles.documentIcon}>
+                <View style={styles.iconLine1} />
+                <View style={styles.iconLine2} />
+                <View style={styles.iconLine3} />
+              </View>
             </View>
           </View>
 
           <View style={styles.contentContainer}>
-            <View style={styles.content}>
+            <View style={styles.textContent}>
               <Text style={styles.title} numberOfLines={2}>
                 {text}
               </Text>
               {subtext ? (
                 <View style={styles.subtextContainer}>
-                  <View style={styles.dotSeparator} />
                   <Text style={styles.subtext} numberOfLines={1}>
                     {subtext}
                   </Text>
@@ -124,14 +128,14 @@ export default function Card({
                 }}
               >
                 <TouchableOpacity
-                  style={styles.buttonWrapper}
+                  style={styles.downloadButton}
                   onPress={handleButtonPress}
                   onPressIn={handleButtonPressIn}
                   onPressOut={handleButtonPressOut}
-                  activeOpacity={0.9}
+                  activeOpacity={0.92}
                 >
-                  <View style={styles.button}>
-                    <View style={styles.downloadIconContainer}>
+                  <View style={styles.buttonContent}>
+                    <View style={styles.iconWrapper}>
                       <DownloadIcon />
                     </View>
                     <Text style={styles.buttonText}>Download</Text>
@@ -141,13 +145,6 @@ export default function Card({
             )}
           </View>
         </View>
-
-        {/* Notebook lines effect */}
-        <View style={styles.notebookLines}>
-          <View style={styles.notebookLine} />
-          <View style={styles.notebookLine} />
-          <View style={styles.notebookLine} />
-        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -155,83 +152,100 @@ export default function Card({
 
 const styles = StyleSheet.create({
   cardWrapper: {
-    marginBottom: verticalScale(12),
+    marginBottom: verticalScale(14),
+    paddingHorizontal: scale(2),
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(12),
-    borderWidth: 1.5,
-    borderColor: '#E0E7FF',
+    borderRadius: moderateScale(16),
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowColor: COLORS.voilet.light,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: COLORS.voilet.light,
   },
-  decorativeCorner: {
+  accentLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: COLORS.voilet.dark,
+  },
+  backgroundPattern: {
     position: 'absolute',
     top: 0,
     right: 0,
-    width: scale(40),
-    height: scale(40),
-    overflow: 'hidden',
+    bottom: 0,
+    width: '50%',
+    opacity: 0.03,
   },
-  cornerTriangle: {
+  patternCircle1: {
     position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderRightWidth: scale(40),
-    borderTopWidth: scale(40),
-    borderRightColor: 'transparent',
-    borderTopColor: '#EEF2FF',
+    top: -20,
+    right: -20,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#6366F1',
+  },
+  patternCircle2: {
+    position: 'absolute',
+    bottom: -30,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#818CF8',
   },
   cardInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: scale(16),
-    paddingVertical: verticalScale(16),
+    paddingHorizontal: scale(18),
+    paddingVertical: verticalScale(18),
+    paddingTop: verticalScale(21),
   },
-  iconCircle: {
-    width: scale(48),
-    height: scale(48),
-    borderRadius: moderateScale(10),
-    backgroundColor: '#EEF2FF',
+  iconContainer: {
+    marginRight: scale(16),
+  },
+  iconBackground: {
+    width: scale(52),
+    height: scale(52),
+    borderRadius: moderateScale(14),
+    backgroundColor: '#F8F9FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: scale(14),
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderWidth: 1.5,
+    borderColor: '#E0E7FF',
   },
-  documentLines: {
-    width: scale(24),
-    height: scale(24),
+  documentIcon: {
+    width: scale(26),
+    height: scale(26),
     justifyContent: 'center',
   },
-  docLine1: {
+  iconLine1: {
     width: '100%',
-    height: 2,
+    height: 2.5,
     backgroundColor: '#6366F1',
-    borderRadius: 1,
-    marginBottom: 3,
+    borderRadius: 1.5,
+    marginBottom: 4,
   },
-  docLine2: {
-    width: '80%',
-    height: 2,
+  iconLine2: {
+    width: '75%',
+    height: 2.5,
     backgroundColor: '#818CF8',
-    borderRadius: 1,
-    marginBottom: 3,
+    borderRadius: 1.5,
+    marginBottom: 4,
   },
-  docLine3: {
-    width: '60%',
-    height: 2,
+  iconLine3: {
+    width: '55%',
+    height: 2.5,
     backgroundColor: '#A5B4FC',
-    borderRadius: 1,
+    borderRadius: 1.5,
   },
   contentContainer: {
     flex: 1,
@@ -239,76 +253,58 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  content: {
+  textContent: {
     flex: 1,
     marginRight: scale(12),
   },
   title: {
-    fontSize: scaleFont(15),
+    fontSize: scaleFont(16),
     fontWeight: '600',
-    color: '#1E293B',
-    lineHeight: scaleFont(21),
-    letterSpacing: 0.1,
+    color: '#0F172A',
+    lineHeight: scaleFont(22),
+    letterSpacing: 0.2,
   },
   subtextContainer: {
+    marginTop: verticalScale(6),
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: verticalScale(5),
-  },
-  dotSeparator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#94A3B8',
-    marginRight: scale(6),
   },
   subtext: {
-    fontSize: scaleFont(12),
+    fontSize: scaleFont(13),
     color: '#64748B',
-    lineHeight: scaleFont(16),
+    lineHeight: scaleFont(18),
+    fontWeight: '400',
     flex: 1,
   },
-  buttonWrapper: {
-    borderRadius: moderateScale(8),
+  downloadButton: {
+    borderRadius: moderateScale(10),
     overflow: 'hidden',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  button: {
-    backgroundColor: '#6366F1',
-    paddingVertical: verticalScale(8),
-    paddingHorizontal: scale(14),
-    borderRadius: moderateScale(8),
+  buttonContent: {
+    backgroundColor: COLORS.voilet.light,
+    paddingVertical: verticalScale(10),
+    paddingHorizontal: scale(16),
+    borderRadius: moderateScale(10),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#4F46E5',
   },
-  downloadIconContainer: {
-    marginRight: scale(6),
+  iconWrapper: {
+    marginRight: scale(7),
     width: scale(16),
     height: scale(16),
     justifyContent: 'center',
     alignItems: 'center',
   },
   buttonText: {
-    fontSize: scaleFont(12),
+    fontSize: scaleFont(13),
     fontWeight: '600',
     color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  notebookLines: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: scale(4),
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'space-evenly',
-    paddingVertical: verticalScale(8),
-  },
-  notebookLine: {
-    width: '100%',
-    height: 1,
-    backgroundColor: '#CBD5E1',
+    letterSpacing: 0.4,
   },
 });

@@ -34,7 +34,7 @@ const BannerAd = ({ onClose }: { onClose?: () => void }) => {
         onRetryAttempt={attempt => console.log(`Attempt ${attempt}`)}
       />
 
-      {showClose ? (
+      {showClose && onClose ? (
         <TouchableOpacity style={styles.closeAdButton} onPress={onClose}>
           <Text style={styles.closeAdText}>×</Text>
         </TouchableOpacity>

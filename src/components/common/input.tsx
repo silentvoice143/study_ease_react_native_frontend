@@ -26,7 +26,7 @@ type SearchBoxProps = TextInputProps & {
 export default function SearchBox({
   placeholder = 'Search...',
   variant = 'fullWidth',
-  height = verticalScale(40),
+  height = verticalScale(60),
   width: fixedWidth,
   minWidth,
   style,
@@ -57,7 +57,11 @@ export default function SearchBox({
 
   return (
     <View>
-      <TextInput placeholder={placeholder} style={boxStyle} {...props} />
+      <TextInput
+        placeholder={placeholder}
+        style={[boxStyle, { height: height }]}
+        {...props}
+      />
     </View>
   );
 }

@@ -14,38 +14,13 @@ import {
   scaleFont,
   verticalScale,
 } from '../../utils/sizer';
-import SearchBox from '../../components/common/input';
+
 import { COLORS } from '../../theme/colors';
 import Card from '../../components/common/card';
 import { fetchStreams } from '../../apis/stream';
 import { useQuery } from '@tanstack/react-query';
 import { streams } from '../../apis/query-keys';
-import Banner from '../../components/ads/benner';
-import { banner_set1 } from '../../components/ads/ads-units';
-import { getRandomAdUnit } from '../../utils/get-random-ads-unit';
-
-// Banner Ad Component - Replace with your actual ad component
-const BannerAd = ({ onClose }: any) => {
-  return (
-    <View style={[{ backgroundColor: COLORS.surface.background }]}>
-      <Banner
-        adUnitId={getRandomAdUnit(banner_set1)}
-        size="BANNER"
-        maxRetries={20}
-        retryDelay={20000}
-        exponentialBackoff={true}
-        showDebugInfo={true}
-        onAdLoaded={() => console.log('Ad ready!')}
-        onRetryAttempt={attempt => console.log(`Attempt ${attempt}`)}
-      />
-      {onClose && (
-        <TouchableOpacity style={styles.closeAdButton} onPress={onClose}>
-          <Text style={styles.closeAdText}>×</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-};
+import BannerAd from '../../components/common/bannerAds';
 
 const SemesterScreen = ({ navigation, route }: any) => {
   const [showTopBanner, setShowTopBanner] = React.useState(true);
@@ -59,18 +34,10 @@ const SemesterScreen = ({ navigation, route }: any) => {
     enabled: !!streamId,
   });
 
-  console.log('Streams Data ', isLoading, isError, error, data);
-
   return (
     <PageWithHeader>
       <View style={styles.container}>
-        {showTopBanner && (
-          <BannerAd
-            onClose={() => {
-              setShowTopBanner(false);
-            }}
-          />
-        )}
+        {showTopBanner && <BannerAd />}
         <ScrollView
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
@@ -107,22 +74,8 @@ const SemesterScreen = ({ navigation, route }: any) => {
                       })
                     }
                   />
-
-                  {/* Mid-content Banner Ad - Shows after every 4 semesters */}
-                  {(idx + 1) % 4 === 0 && idx !== data.totalSemesters - 1 && (
-                    <View style={styles.inFeedAdWrapper}>
-                      <BannerAd onClose={null} />
-                    </View>
-                  )}
                 </React.Fragment>
               ))}
-
-            {/* Bottom Banner Ad - Shows at the end of content */}
-            {data?.totalSemesters && data.totalSemesters > 0 && (
-              <View style={styles.inFeedAdWrapper}>
-                <BannerAd onClose={null} />
-              </View>
-            )}
           </View>
         </ScrollView>
       </View>
@@ -133,7 +86,7 @@ const SemesterScreen = ({ navigation, route }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface.background,
+    backgroundColor: COLORS.surface.white,
   },
   scrollView: {
     flex: 1,
@@ -260,12 +213,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   //Banner
-  bannerAdContainer: {
-    backgroundColor: COLORS.surface.white,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0f2fe',
-    position: 'relative',
-  },
+
   bannerAdContent: {
     padding: 12,
     flexDirection: 'row',

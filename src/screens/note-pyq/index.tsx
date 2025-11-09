@@ -6,7 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import PageWithHeader from '../../components/layout/page-with-header';
 import {
   scale,
@@ -15,7 +15,6 @@ import {
   moderateScale,
 } from '../../utils/sizer';
 import { COLORS } from '../../theme/colors';
-import DownloadIcon from '../../assets/icons/download-icon';
 import { Toast } from 'toastify-react-native';
 import { useQuery } from '@tanstack/react-query';
 import { notes, pyq } from '../../apis/query-keys';
@@ -24,7 +23,7 @@ import { useAppDispatch } from '../../hooks/use-redux';
 import { useFileDownloader } from '../../hooks/use-download';
 import RNFS from 'react-native-fs';
 import { removeOfflineFile } from '../../store/slices/offline-slice';
-import Banner from '../../components/ads/benner';
+
 import {
   createRewardedAd,
   loadAndShowInterstitialAdWithRetry,
@@ -35,6 +34,8 @@ import { InterstitialAd } from 'react-native-google-mobile-ads';
 import { useFocusEffect } from '@react-navigation/native';
 import { banner_set2 } from '../../components/ads/ads-units';
 import { getRandomAdUnit } from '../../utils/get-random-ads-unit';
+import NoteCard from '../../components/common/note-card';
+import BannerAd from '../../components/common/bannerAds';
 
 const NotesPYQScreen = ({ navigation, route }: any) => {
   const { subjectId, initialTab } = route.params ?? {};
@@ -113,6 +114,8 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
   }, [data, activeTab]);
 
   const showAdsAndDownload = async (item: any) => {
+    setDownloadingId(item.id);
+    console.log('Showing ads');
     let rewardEarned = false;
     try {
       setShowingAds(true);
@@ -145,16 +148,16 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
               type: 'info',
               text1: 'View full ad to download the file',
             });
-            return;
           }
-          handleDownloadFile(item);
+          // handleDownloadFile(item);
+          setDownloadingId(null);
           setDownloadAdLoaded(false);
         },
 
         // Called when user earns the reward
         onRewardEarned: reward => {
           rewardEarned = true;
-          console.log('User earned reward:', reward);
+          handleDownloadFile(item);
         },
       });
     } catch (err) {
@@ -201,83 +204,40 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
     );
   }, []);
 
-  const BannerAd = ({ onClose }: any) => {
-    return (
-      <View style={styles.bannerAdContainer}>
-        <Banner
-          adUnitId={getRandomAdUnit(banner_set2)}
-          size="BANNER"
-          maxRetries={20}
-          retryDelay={20000}
-          exponentialBackoff={true}
-          showDebugInfo={true}
-          onAdLoaded={() => console.log('Ad ready!')}
-          onRetryAttempt={attempt => console.log(`Attempt ${attempt}`)}
-        />
-        {onClose && (
-          <TouchableOpacity style={styles.closeAdButton} onPress={onClose}>
-            <Text style={styles.closeAdText}>×</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
+  const combinedData = useMemo(() => {
+    if (!data) return [];
+    const newData = [...data];
+    const ads = [];
+    for (let i = 3; i < newData.length; i += 4) {
+      ads.push({ type: 'ad', id: `ad-${i}` });
+    }
+    // interleave ads into data
+    ads.forEach((ad, i) => newData.splice(i * 4 + 3, 0, ad));
+    return newData;
+  }, [data]);
 
   const renderItem = ({ item, index }: any) => {
-    const isDownloading = downloadingId === item.id && status === 'downloading';
+    if (item.type === 'ad') return <BannerAd />;
+    const isDownloading = downloadingId === item.id;
     const fileExists = fileExistence[item.id];
 
     return (
-      <React.Fragment>
-        <TouchableOpacity
-          style={styles.itemCard}
-          onPress={() => {
-            console.log('navigating to note screen', item.fileUrl);
-            navigation.navigate('StreamsTab', {
-              screen: 'Noteview',
-              params: { url: item.fileUrl || 'abc', headerTitle: item.title },
-            });
-          }}
-        >
-          <View style={styles.itemContent}>
-            <Text style={styles.itemTitle}>{item.title}</Text>
-            <View style={styles.itemMeta}>
-              <Text style={styles.metaText}>{item.year}</Text>
-              {fileExists && (
-                <View style={styles.downloadedBadge}>
-                  <Text style={styles.downloadedText}>Downloaded</Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {isDownloading || showingAds ? (
-            <View style={styles.progressContainer}>
-              <ActivityIndicator size="small" color={COLORS.voilet.dark} />
-              <Text style={styles.progressText}>{progress}%</Text>
-            </View>
-          ) : fileExists ? (
-            <TouchableOpacity
-              onPress={() => handleDeleteFile(item)}
-              style={[styles.downloadButton, styles.deleteButton]}
-            >
-              <Text style={styles.deleteIcon}>🗑️</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              onPress={() => showAdsAndDownload(item)}
-              style={styles.downloadButton}
-            >
-              <DownloadIcon />
-            </TouchableOpacity>
-          )}
-        </TouchableOpacity>
-        {(index + 1) % 3 === 0 && index !== notesData.length - 1 && (
-          <View style={styles.inFeedAdWrapper}>
-            <BannerAd onClose={null} />
-          </View>
-        )}
-      </React.Fragment>
+      <NoteCard
+        title={item.title}
+        year={item.year}
+        fileExists={fileExists}
+        isDownloading={isDownloading}
+        showingAds={showingAds}
+        progress={progress}
+        onPress={() => {
+          navigation.navigate('StreamsTab', {
+            screen: 'Noteview',
+            params: { url: item.fileUrl || 'abc', headerTitle: item.title },
+          });
+        }}
+        onDownload={() => showAdsAndDownload(item)}
+        onDelete={() => handleDeleteFile(item)}
+      />
     );
   };
 
@@ -318,10 +278,10 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
 
     return (
       <FlatList
-        data={data}
+        data={combinedData}
         renderItem={renderItem}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[styles.listContainer, { paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}
       />
     );
@@ -356,7 +316,7 @@ const NotesPYQScreen = ({ navigation, route }: any) => {
                 activeTab === 'pyq' && styles.activeTabText,
               ]}
             >
-              Previous Year Questions
+              PYQ
             </Text>
           </TouchableOpacity>
         </View>

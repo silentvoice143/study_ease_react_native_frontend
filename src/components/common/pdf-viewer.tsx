@@ -324,8 +324,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.surface.background,
     position: 'relative',
+    paddingBottom: verticalScale(70),
   },
   pdf: {
     flex: 1,
@@ -343,9 +344,10 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 20,
     fontSize: 16,
     color: '#666',
+    marginLeft: 8,
   },
   errorContainer: {
     justifyContent: 'center',

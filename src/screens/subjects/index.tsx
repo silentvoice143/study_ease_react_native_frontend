@@ -22,6 +22,7 @@ import SubjectCard from './_components/subject-card';
 import { Toast } from 'toastify-react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { NavigatorScreenParams } from '@react-navigation/native';
+import BannerAd from '../../components/common/bannerAds';
 
 type Subject = {
   id: number;
@@ -50,6 +51,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Subject'>;
 const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
   const { streamId, semester } = route.params ?? { streamId: '', semester: 0 };
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showTopBanner, setShowTopBanner] = useState(true);
 
   console.log('Stream ID in SubjectScreen:', streamId);
 
@@ -150,8 +152,10 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
   return (
     <PageWithHeader>
       <View style={styles.container}>
+        {showTopBanner && <BannerAd />}
         <View
           style={{
+            marginTop: verticalScale(10),
             paddingHorizontal: scale(20),
             marginBottom: verticalScale(20),
           }}
@@ -163,9 +167,10 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
             style={{
               borderRadius: moderateScale(28),
               paddingHorizontal: scale(16),
+
               borderColor: COLORS.voilet.lighter,
             }}
-            height={verticalScale(40)}
+            height={verticalScale(48)}
           />
         </View>
 
@@ -194,7 +199,7 @@ const SubjectScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface.background,
+    backgroundColor: COLORS.surface.white,
   },
   scrollView: {
     flex: 1,

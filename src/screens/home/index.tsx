@@ -162,7 +162,7 @@ const Home = ({ navigation }: any) => {
     const unsubscribe = NetInfo.addEventListener(state => {
       if (state.isConnected && state.isInternetReachable === false) {
         Toast.info('No internet access');
-        navigation.naviigate('Offline');
+        navigation?.naviigate('Offline');
       }
     });
 
@@ -346,7 +346,7 @@ const Home = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface.background,
+    backgroundColor: COLORS.surface.white,
   },
   scrollContent: {
     paddingBottom: verticalScale(100),
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   notificationBox: {
-    backgroundColor: COLORS.surface.background,
+    backgroundColor: COLORS.surface.white,
     borderRadius: 12,
     overflow: 'hidden',
   },

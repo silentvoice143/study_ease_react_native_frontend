@@ -33,12 +33,12 @@ const PageWithHeader = ({
     };
   }, []);
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.surface.background }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.surface.white }}>
       <StatusBar
         backgroundColor={COLORS.voilet.light}
         barStyle="dark-content"
       />
-      <LinearGradient colors={[COLORS.voilet.light, COLORS.surface.background]}>
+      <LinearGradient colors={[COLORS.voilet.light, COLORS.surface.white]}>
         <Header headerTitle={headerTitle} navigateBack={from ?? ''} />
       </LinearGradient>
 
